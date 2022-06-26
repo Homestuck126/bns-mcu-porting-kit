@@ -1,5 +1,5 @@
 #include <bns-client/verify/verify_receipt_result.h>
-
+//frees data
 void verify_receipt_result_free(
     verify_receipt_result_t* const verifyReceiptResult) {
   if (verifyReceiptResult) {

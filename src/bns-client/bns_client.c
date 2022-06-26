@@ -373,9 +373,10 @@ bns_exit_code_t bns_client_verify_by_done_co(
       exitCode =
           verify(bnsClient, &receipt[i], &merkleProof, &verifyReceiptResult);
       if (bnsClient->callback.get_verify_receipt_result) {
-        bnsClient->callback.get_verify_receipt_result(&receipt[i], &merkleProof,
-                                                      &verifyReceiptResult);
+        bnsClient->callback.get_verify_receipt_result
+        (&receipt[i], &merkleProof, &verifyReceiptResult);
       }
+      //frees up the memory used in the receipt and merkle proof
       bnsClient->receiptDao.delete(&receipt[i]);
       merkle_proof_free(&merkleProof);
       verify_receipt_result_free(&verifyReceiptResult);
@@ -397,6 +398,7 @@ bns_exit_code_t bns_get_done_clearance_order(
   size_t count = 0;
 bns_get_done_clearance_order_beg:
   LOG_INFO("bns_get_done_clearance_order() begin");
+  //why CJSON? 
   bns_exit_code_t exitCode = BNS_OK;
   cJSON*          root     = NULL;
   char*           url      = NULL;
@@ -436,19 +438,21 @@ bns_get_done_clearance_order_beg:
   return exitCode;
 bns_get_done_clearance_order_fail:
   if (url) { BNS_FREE(url); }
+  //why is this a CJSON
   cJSON_Delete(root);
   LOG_ERROR("bns_get_done_clearance_order() error, " BNS_EXIT_CODE_PRINT_FORMAT,
             bns_strerror(exitCode));
   if (bnsClient && bnsClient->maxRetryCount) {
     if (count++ < *bnsClient->maxRetryCount) {
       LOG_DEBUG("bns_get_done_clearance_order() retry, count=%ld", count);
-      if (bnsClient->retryDelaySec) { sleep(*bnsClient->retryDelaySec); }
+      if (bnsClient->retryDelaySec) 
+      { sleep(*bnsClient->retryDelaySec); }
       goto bns_get_done_clearance_order_beg;
     }
   }
   return exitCode;
 }
-
+//Set the count of verify After Ledger Input
 bns_exit_code_t bns_client_set_verify_after_ledger_input_count(
     bns_client_t* const bnsClient, const size_t count) {
   if (!bnsClient) { return BNS_CLIENT_NULL_ERROR; }
@@ -458,7 +462,7 @@ bns_exit_code_t bns_client_set_verify_after_ledger_input_count(
   *bnsClient->verifyAfterLedgerInputCount = count;
   return BNS_OK;
 }
-
+//Set retryDelaysize and if BNS client exists for size
 bns_exit_code_t bns_client_set_retry_count(bns_client_t* const bnsClient,
                                            const size_t        count) {
   if (!bnsClient) { return BNS_CLIENT_NULL_ERROR; }
@@ -468,7 +472,7 @@ bns_exit_code_t bns_client_set_retry_count(bns_client_t* const bnsClient,
   *bnsClient->maxRetryCount = count;
   return BNS_OK;
 }
-
+//Set retryDelaysize and if BNS client exists for seconds
 bns_exit_code_t bns_client_set_retry_delay_sec(bns_client_t* const bnsClient,
                                                const size_t        sec) {
   if (!bnsClient) { return BNS_CLIENT_NULL_ERROR; }
@@ -478,7 +482,7 @@ bns_exit_code_t bns_client_set_retry_delay_sec(bns_client_t* const bnsClient,
   *bnsClient->retryDelaySec = sec;
   return BNS_OK;
 }
-
+// Frees up data used by BNS_Client
 void bns_client_free(bns_client_t* const bnsClient) {
   if (bnsClient) {
     if (bnsClient->config.indexValueKey) {

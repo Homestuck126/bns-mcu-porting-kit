@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-
+// get timestamp as string
 char* get_timestamp_string() {
   LOG_DEBUG("get_timestamp_string() begin");
   long int timestampLong = time(NULL);
@@ -14,7 +14,7 @@ char* get_timestamp_string() {
   LOG_DEBUG("get_timestamp_string() end, timestamp=%s", timestamp);
   return timestamp;
 }
-
+//get timestamp and return in form of long template
 bns_long_t get_timestamp() {
   LOG_DEBUG("get_timestamp_string() begin");
   bns_long_t timestamp = time(NULL);

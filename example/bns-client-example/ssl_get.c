@@ -14,22 +14,27 @@
 
 static CURL*       curl = NULL;
 struct curl_slist* hs   = NULL;
-
+//allocate space and put chunks into memory block 
 static size_t curlDataCallback(void*  chunks,
                                size_t chunkSize,
                                size_t chunksCount,
                                void*  memoryBlock) {
+  //Allocate memory block
   MemoryBlock* block = (MemoryBlock*)memoryBlock;
-
+  //size of data
   size_t additionalDataSize = chunkSize * chunksCount;
+  //reallocate memory
   block->data = realloc(block->data, block->size + additionalDataSize + 1);
+  //if block data DNE, error
   if (block->data == NULL) {
     LOG_ERROR("curlDataCallback() Out of memory");
     abort();
   }
-
+  //copy chunks into this new destination
   memcpy(block->data + block->size, chunks, additionalDataSize);
+  //add additionalDataSize into size
   block->size += additionalDataSize;
+  //set the end data to 0
   block->data[block->size] = 0;
 
   return additionalDataSize;

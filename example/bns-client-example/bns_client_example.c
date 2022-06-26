@@ -96,7 +96,7 @@ int bns_client_example() {
        */
       char  cmdJson[CMD_LEN] = {0};
       char* timestamp        = get_timestamp_string();
-
+      
       sprintf(cmdJson,
               "{\"address\":\"%s\",\"timestamp\":%s,\"text\":\"%s\","
               "\"description\":\"%s\"}",
@@ -120,6 +120,7 @@ int bns_client_example() {
       }
       nanosleep((const struct timespec[]){{1L, 0L}}, NULL);
     }
+    // different than ITM There is a login time required with BNS
     bns_long_t temp_time = get_timestamp();
     if (temp_time - time > 3600000) {
       bns_relogin(&bnsClient);

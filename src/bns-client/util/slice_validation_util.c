@@ -11,6 +11,7 @@ bns_exit_code_t is_leaf_node(const slice_t* const   slice,
   bns_exit_code_t exitCode;
   char*           pbPairValue     = NULL;
   unsigned char*  pbPairValueByte = NULL;
+  //If slice or pbPair does not exist, error
   if (!slice) {
     exitCode = BNS_SLICE_NULL_ERROR;
     goto is_leaf_node_fail;
@@ -21,7 +22,7 @@ bns_exit_code_t is_leaf_node(const slice_t* const   slice,
   }
   LOG_DEBUG("is_leaf_node() begin, " SLICE_PRINT_FORMAT,
             SLICE_TO_PRINT_ARGS(slice));
-
+  //
   char leafNodeHash[HASH_STR_LEN] = {0};
   if ((exitCode = get_leaf_node_hash(slice, leafNodeHash)) != BNS_OK) {
     goto is_leaf_node_fail;
@@ -54,32 +55,38 @@ is_leaf_node_fail:
             bns_strerror(exitCode));
   return exitCode;
 }
-
+//grabs either slices 0 or slices 1 from hashStringList dependes on index
 bns_exit_code_t get_leaf_node_hash(const slice_t* const slice,
                                    char*                leafNodeHash) {
   bns_exit_code_t exitCode = BNS_OK;
+  //if slice does not exist, error
   if (!slice) {
     exitCode = BNS_SLICE_NULL_ERROR;
     goto get_leaf_node_hash_fail;
   }
+  //if the index is <0 , error
   if (slice->index < 0) {
     exitCode = BNS_SLICE_INDEX_NEGATIVE_ERROR;
     goto get_leaf_node_hash_fail;
   }
+  //if leafNodeHash DNE, error
   if (!leafNodeHash) {
     exitCode = BNS_LEAF_NODE_HASH_NULL_ERROR;
     goto get_leaf_node_hash_fail;
   }
+  //if slice->index is even, or 1, index is 0, else index is 1
   size_t index;
   if (slice->index % 2 == 0 || slice->index == 1) {
     index = 0;
   } else {
     index = 1;
   }
+  //if index >= slices size
   if (index >= slice->size) {
     exitCode = BNS_GET_LEAF_NODE_HASH_OUT_OF_RANGE_ERROR;
     goto get_leaf_node_hash_fail;
   }
+  //copy leafNodeHash from slice
   strncpy(leafNodeHash, slice->hashStringList[index], HASH_STR_LEN - 1);
   LOG_DEBUG("get_leaf_node_hash() end, leafNodeHash=%s", leafNodeHash);
   return exitCode;

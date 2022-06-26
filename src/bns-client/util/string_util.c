@@ -2,7 +2,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-
+//equal strings check
 bool bns_equals_ignore_case(const char* const a, const char* const b) {
   if (!a || !b) { return false; }
   if (a == b) { return true; }
@@ -13,7 +13,7 @@ bool bns_equals_ignore_case(const char* const a, const char* const b) {
   }
   return true;
 }
-
+//equal strings check with a check that their length is < n
 bool bns_equals_n_ignore_case(const char* const a,
                               const char* const b,
                               const size_t      n) {
@@ -27,10 +27,11 @@ bool bns_equals_n_ignore_case(const char* const a,
   }
   return true;
 }
-
+//copy src to dest 
 void bns_strdup(char** const dest, const char* src) {
   if (!dest || !src) { return; }
   size_t len = strlen(src) + 1;
+  //allocate/reallocate based on whether dest exists
   if (*dest) {
     *dest = (char*)realloc(*dest, sizeof(char) * len);
   } else {

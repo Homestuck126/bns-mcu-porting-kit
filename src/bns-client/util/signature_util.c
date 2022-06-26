@@ -25,11 +25,14 @@ void bns_sha3(const unsigned char* toSignData,
 void bns_sha3_prefix(const unsigned char* toSignData,
                      size_t               size,
                      unsigned char*       sha3Result) {
+  //if toSignData does not exist, size = 0, sha3Result does not exist, return
   if (!toSignData || (size == 0) || !sha3Result) { return; }
+  //length is size of tosigndata and prefix
   size_t newSize = 1 + strlen(MESSAGE_PREFIX_2) +
                    bns_digits(strlen((char*)toSignData)) +
                    strlen((char*)toSignData);
   char* message = (char*)malloc(sizeof(char) * (newSize + 1));
+  //put "0x19Ethereum Signed Message:"\ntoSignData lengthtoSigndata
   sprintf(message, "%c%s%lu%s", MESSAGE_PREFIX_1, MESSAGE_PREFIX_2,
           strlen((char*)toSignData), (char*)toSignData);
   SHA3_CTX ctx;
@@ -138,12 +141,14 @@ bns_exit_code_t verify_signature(const char* const  address,
                                  const sig_t* const sig) {
   LOG_DEBUG("verify_signature() begin, address=%s, toSignData=%s, ", address,
             toSignData);
+  //if address, toSignData or sig do not exist
   if (!address || !toSignData || !sig) { return BNS_VERIFY_SIGNATURE_ERROR; }
   bns_exit_code_t exitCode = BNS_OK;
   {
+    //initalize public key and recover address
     char publicKey[PUBLIC_KEY_STR_LEN]   = {0};
     char recoverAddress[ADDRESS_STR_LEN] = {0};
-
+    //intalize shaSignData
     unsigned char shaSignData[SHA3_STR_LEN] = {0};
     bns_sha3_prefix((unsigned char*)toSignData, strlen(toSignData),
                     shaSignData);

@@ -6,11 +6,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+//makes receipts clearanceORder and indexValue into 1 string
 bns_exit_code_t receipt_first_part_to_sign_data(const receipt_t* receipt,
                                                 char**           firstPart) {
   LOG_DEBUG("receipt_first_part_to_sign_data() begin");
   bns_exit_code_t exitCode = BNS_OK;
+  //check that the 2 variables exist 
   if (!receipt) {
     exitCode = BNS_RECEIPT_NULL_ERROR;
     goto receipt_first_part_sign_data_fail;
@@ -19,15 +20,17 @@ bns_exit_code_t receipt_first_part_to_sign_data(const receipt_t* receipt,
     exitCode = BNS_RECEIPT_FIRST_PART_TO_SIGN_DATA_NULL_ERROR;
     goto receipt_first_part_sign_data_fail;
   }
+  //Get size of receipts indexvalue & clearanceOrder
   size_t firstPartSize = 0;
   firstPartSize += strlen(receipt->indexValue);
   firstPartSize += bns_digits(receipt->clearanceOrder);
-
+  //allocates data
   if (*firstPart) {
     *firstPart = (char*)realloc(*firstPart, sizeof(char) * (firstPartSize + 1));
   } else {
     *firstPart = (char*)malloc(sizeof(char) * (firstPartSize + 1));
   }
+  //put indexValue clearanceorder as 1 string into firstPart
   sprintf(*firstPart, "%s%lld", receipt->indexValue, receipt->clearanceOrder);
 
   LOG_DEBUG("receipt_first_part_to_sign_data() end, firstPart=%s", *firstPart);
@@ -39,12 +42,13 @@ receipt_first_part_sign_data_fail:
       bns_strerror(exitCode));
   return exitCode;
 }
-
+//Combine CallerAddress, timetamp, cmd, metadata,timestampSPO, result, signature together
 bns_exit_code_t receipt_second_part_hash_to_sign_data(const receipt_t* receipt,
                                                       char** secondPartHash) {
   LOG_DEBUG("receipt_second_part_hash_to_sign_data() begin");
   bns_exit_code_t exitCode   = BNS_OK;
   char*           secondPart = NULL;
+  //check receipt and SecondPartHash exist
   if (!receipt) {
     exitCode = BNS_RECEIPT_NULL_ERROR;
     goto receipt_second_part_hash_sign_data_fail;
@@ -53,6 +57,8 @@ bns_exit_code_t receipt_second_part_hash_to_sign_data(const receipt_t* receipt,
     exitCode = BNS_RECEIPT_SECOND_PART_TO_SIGN_DATA_NULL_ERROR;
     goto receipt_second_part_hash_sign_data_fail;
   }
+  //Get size of secondPart, which consists of CallerAddress, timestamp, cmd
+  //metadata, timestampSPO,result,signature of client  
   size_t secondPartSize = 0;
   secondPartSize += strlen(receipt->callerAddress);
 #if defined(RECEIPT_TIMESTAMP_IS_LONG)
@@ -71,9 +77,9 @@ bns_exit_code_t receipt_second_part_hash_to_sign_data(const receipt_t* receipt,
   secondPartSize += strlen(receipt->sigClient.r);
   secondPartSize += strlen(receipt->sigClient.s);
   secondPartSize += strlen(receipt->sigClient.v);
-
+//reallocates secondPart
   secondPart = (char*)malloc(sizeof(char) * (secondPartSize + 1));
-
+// format everything into secondpart as all the strings together
 #if defined(RECEIPT_TIMESTAMP_IS_LONG)
   sprintf(secondPart, "%s%lld%s%s%lld%s%s%s%s", receipt->callerAddress,
           receipt->timestamp, receipt->cmd, receipt->metadata,
@@ -107,13 +113,14 @@ receipt_second_part_hash_sign_data_fail:
       bns_strerror(exitCode));
   return exitCode;
 }
-
+//combine both first and second part
 bns_exit_code_t receipt_to_sign_data(const receipt_t* receipt,
                                      char**           toSignData) {
   LOG_DEBUG("receipt_to_sign_data() begin");
   bns_exit_code_t exitCode;
   char*           firstPart  = NULL;
   char*           secondPart = NULL;
+  //check existence of receipt and toSignData
   if (!receipt) {
     exitCode = BNS_RECEIPT_NULL_ERROR;
     goto receipt_sign_data_fail;
@@ -122,6 +129,7 @@ bns_exit_code_t receipt_to_sign_data(const receipt_t* receipt,
     exitCode = BNS_RECEIPT_TO_SIGN_DATA_NULL_ERROR;
     goto receipt_sign_data_fail;
   }
+  //check that first part works and grab first part too
   if ((exitCode = receipt_first_part_to_sign_data(receipt, &firstPart)) !=
       BNS_OK) {
     goto receipt_sign_data_fail;
@@ -130,6 +138,7 @@ bns_exit_code_t receipt_to_sign_data(const receipt_t* receipt,
            receipt, &secondPart)) != BNS_OK) {
     goto receipt_sign_data_fail;
   }
+  //Allocates data for toSignData
   if (*toSignData) {
     *toSignData = (char*)realloc(
         *toSignData,
@@ -138,7 +147,9 @@ bns_exit_code_t receipt_to_sign_data(const receipt_t* receipt,
     *toSignData = (char*)malloc(sizeof(char) *
                                 (strlen(firstPart) + strlen(secondPart) + 1));
   }
+  //combine first and second part together
   sprintf(*toSignData, "%s%s", firstPart, secondPart);
+  //clean up
   BNS_FREE(firstPart);
   BNS_FREE(secondPart);
   LOG_DEBUG("receipt_to_sign_data() begin, toSignData=%s", *toSignData);
@@ -151,7 +162,7 @@ receipt_sign_data_fail:
             bns_strerror(exitCode));
   return exitCode;
 }
-
+//parses receipt and checks for errors while saving everything in receipt
 bns_exit_code_t parse_receipt_from_cjson(cJSON* const     root,
                                          receipt_t* const receipt) {
   LOG_DEBUG("parse_receipt_from_cjson() begin");
@@ -162,21 +173,25 @@ bns_exit_code_t parse_receipt_from_cjson(cJSON* const     root,
     exitCode = BNS_RECEIPT_NULL_ERROR;
     goto parse_receipt_from_cJSON_fail;
   }
-
+  //GetCallerAddress from root
   temp = cJSON_GetObjectItem(root, "callerAddress");
   if (!cJSON_IsString(temp)) {
     exitCode = BNS_RESPONSE_CALLER_ADDRESS_PARSE_ERROR;
     goto parse_receipt_from_cJSON_fail;
   }
+  //length of callerAddress
   size = strlen(temp->valuestring);
+  //ADDRESS STR_LEN +2 is ADDRESS_0x_STR_LEN
   if (size >= ADDRESS_0X_STR_LEN) {
     exitCode = BNS_RECEIPT_FILED_EXCEED_DEFINED_SIZE_ERROR;
     goto parse_receipt_from_cJSON_fail;
   }
+  //copy temp callerAddress to receipt calleraddress
   strcpy(receipt->callerAddress, temp->valuestring);
+  //cleanup
   cJSON_DetachItemViaPointer(root, temp);
   cJSON_Delete(temp);
-
+  //grab timestamp from root
   temp = cJSON_GetObjectItem(root, "timestamp");
 #if defined(RECEIPT_TIMESTAMP_IS_LONG)
   if (!cJSON_IsNumber(temp) && !cJSON_IsString(temp)) {
@@ -185,80 +200,106 @@ bns_exit_code_t parse_receipt_from_cjson(cJSON* const     root,
   }
   receipt->timestamp = temp->valueint;
 #else
+//if temp is neither a string or number, error.
   if (!cJSON_IsNumber(temp) && !cJSON_IsString(temp)) {
     exitCode = BNS_RESPONSE_TIMESTAMP_PARSE_ERROR;
     goto parse_receipt_from_cJSON_fail;
   }
+  //if string,
   if (cJSON_IsString(temp)) {
+    //size = size of timestamp
     size = strlen(temp->valuestring);
+    //if size >= Timestamp_STR_LEN
     if (size >= TIMESTAMP_STR_LEN) {
       exitCode = BNS_RECEIPT_FILED_EXCEED_DEFINED_SIZE_ERROR;
       goto parse_receipt_from_cJSON_fail;
     }
+    //put timestamp into receipt
     strcpy(receipt->timestamp, temp->valuestring);
   } else {
+    //get number of digits
     size_t digits = bns_digits(temp->valueint);
+    //if greater than timestamp length, error
     if (digits >= TIMESTAMP_STR_LEN) {
       exitCode = BNS_RECEIPT_FILED_EXCEED_DEFINED_SIZE_ERROR;
       goto parse_receipt_from_cJSON_fail;
     }
+    //put temstamp into receipt
     sprintf(receipt->timestamp, "%lld", temp->valueint);
   }
 #endif
+//cleanup
   cJSON_DetachItemViaPointer(root, temp);
   cJSON_Delete(temp);
-
+  //grab the cmd field from root
   temp = cJSON_GetObjectItem(root, "cmd");
+  //if not string, error
   if (!cJSON_IsString(temp)) {
     exitCode = BNS_RESPONSE_CMD_PARSE_ERROR;
     goto parse_receipt_from_cJSON_fail;
   }
+  //get length of cmd
   size = strlen(temp->valuestring);
+  //if length is >CMD_LEN, error
   if (size >= CMD_LEN) {
     exitCode = BNS_RECEIPT_FILED_EXCEED_DEFINED_SIZE_ERROR;
     goto parse_receipt_from_cJSON_fail;
   }
+  //store cmd into receipt
   strcpy(receipt->cmd, temp->valuestring);
+  //cleanup
   cJSON_DetachItemViaPointer(root, temp);
   cJSON_Delete(temp);
-
+  //get indexvalue of root
   temp = cJSON_GetObjectItem(root, "indexValue");
+  //if not string, error 
   if (!cJSON_IsString(temp)) {
     exitCode = BNS_RESPONSE_INDEX_VALUE_PARSE_ERROR;
     goto parse_receipt_from_cJSON_fail;
   }
+  //size = length of index value
   size = strlen(temp->valuestring);
   if (size >= INDEX_VALUE_LEN) {
     exitCode = BNS_RECEIPT_FILED_EXCEED_DEFINED_SIZE_ERROR;
     goto parse_receipt_from_cJSON_fail;
   }
+  //copy index value from temp
   strcpy(receipt->indexValue, temp->valuestring);
+  //clean up
   cJSON_DetachItemViaPointer(root, temp);
   cJSON_Delete(temp);
-
+  //get metadata from root
   temp = cJSON_GetObjectItem(root, "metadata");
+  // if not string, error
   if (!cJSON_IsString(temp)) {
     exitCode = BNS_RESPONSE_METADATA_PARSE_ERROR;
     goto parse_receipt_from_cJSON_fail;
   }
+  //get size
   size = strlen(temp->valuestring);
+  //if size is greater than length, error
   if (size > METADATA_LEN) {
     exitCode = BNS_RECEIPT_FILED_EXCEED_DEFINED_SIZE_ERROR;
     goto parse_receipt_from_cJSON_fail;
   }
+  //put metadata into receipt
   strcpy(receipt->metadata, temp->valuestring);
+  //cleanup
   cJSON_DetachItemViaPointer(root, temp);
   cJSON_Delete(temp);
-
+  //get clearanceOrder from root
   temp = cJSON_GetObjectItem(root, "clearanceOrder");
+  // if clearanceOrder isn't a number, error
   if (!cJSON_IsNumber(temp)) {
     exitCode = BNS_RESPONSE_CO_PARSE_ERROR;
     goto parse_receipt_from_cJSON_fail;
   }
+  //get clearanceOrder
   receipt->clearanceOrder = (long long int)temp->valueint;
+  //cleanup
   cJSON_DetachItemViaPointer(root, temp);
   cJSON_Delete(temp);
-
+  //get timestampSPO from root
   temp = cJSON_GetObjectItem(root, "timestampSPO");
 #if defined(RECEIPT_TIMESTAMP_IS_LONG)
   if (!cJSON_IsNumber(temp) && !cJSON_IsString(temp)) {
@@ -267,26 +308,35 @@ bns_exit_code_t parse_receipt_from_cjson(cJSON* const     root,
   }
   receipt->timestampSPO = temp->valueint;
 #else
+//if temp is neither a number or a string, error
   if (!cJSON_IsNumber(temp) && !cJSON_IsString(temp)) {
     exitCode = BNS_RESPONSE_TIMESTAMP_BNS_PARSE_ERROR;
     goto parse_receipt_from_cJSON_fail;
   }
+  //if string, 
   if (cJSON_IsString(temp)) {
+    //get size of timestampSPO
     size = strlen(temp->valuestring);
+    //if size >= length allocated for timestamp
     if (size >= TIMESTAMP_STR_LEN) {
       exitCode = BNS_RECEIPT_FILED_EXCEED_DEFINED_SIZE_ERROR;
       goto parse_receipt_from_cJSON_fail;
     }
+    //copy timestampSPO to receipt
     strcpy(receipt->timestampSPO, temp->valuestring);
   } else {
+    //get number of digits of timestampSPO
     size_t digits = bns_digits(temp->valueint);
+    //if digits >= timestamp, then error
     if (digits >= TIMESTAMP_STR_LEN) {
       exitCode = BNS_RECEIPT_FILED_EXCEED_DEFINED_SIZE_ERROR;
       goto parse_receipt_from_cJSON_fail;
     }
+    //copy timestampSPO to receipt
     sprintf(receipt->timestampSPO, "%lld", temp->valueint);
   }
 #endif
+//cleanup
   cJSON_DetachItemViaPointer(root, temp);
   cJSON_Delete(temp);
 
@@ -303,7 +353,7 @@ bns_exit_code_t parse_receipt_from_cjson(cJSON* const     root,
   strcpy(receipt->result, temp->valuestring);
   cJSON_DetachItemViaPointer(root, temp);
   cJSON_Delete(temp);
-
+  //Client signatures, should all be strings. 
   sig  = cJSON_GetObjectItem(root, "sigClient");
   temp = cJSON_GetObjectItem(sig, "r");
   if (!cJSON_IsString(temp)) {
@@ -345,10 +395,11 @@ bns_exit_code_t parse_receipt_from_cjson(cJSON* const     root,
   }
   strcpy(receipt->sigClient.v, temp->valuestring);
   cJSON_DetachItemViaPointer(sig, temp);
+  //cleanup
   cJSON_Delete(temp);
   cJSON_DetachItemViaPointer(root, sig);
   cJSON_Delete(sig);
-
+  //server signature, should all be strings
   sig  = cJSON_GetObjectItem(root, "sigServer");
   temp = cJSON_GetObjectItem(sig, "r");
   if (!cJSON_IsString(temp)) {
@@ -389,6 +440,7 @@ bns_exit_code_t parse_receipt_from_cjson(cJSON* const     root,
     goto parse_receipt_from_cJSON_fail;
   }
   strcpy(receipt->sigServer.v, temp->valuestring);
+  //cleanup
   cJSON_DetachItemViaPointer(sig, temp);
   cJSON_Delete(temp);
   cJSON_DetachItemViaPointer(root, sig);
@@ -406,10 +458,12 @@ bns_exit_code_t receipt_check_sig(const char* const      serverWalletAddress,
                                   const receipt_t* const receipt) {
   bns_exit_code_t exitCode;
   char*           toSignData = NULL;
+  //if wallet address does not exist, error
   if (!serverWalletAddress) {
     exitCode = BNS_SERVER_WALLET_ADDRESS_NULL_ERROR;
     goto receipt_check_sig_fail;
   }
+  //if receipt does not exist, error
   if (!receipt) {
     exitCode = BNS_RECEIPT_NULL_ERROR;
     goto receipt_check_sig_fail;
@@ -418,10 +472,11 @@ bns_exit_code_t receipt_check_sig(const char* const      serverWalletAddress,
       "receipt_check_sig() begin, "
       "serverWalletAddress=%s, " RECEIPT_PRINT_FORMAT,
       serverWalletAddress, RECEIPT_TO_PRINT_ARGS(receipt));
-
+  // grab to_sign_data from pt1 and pt2
   if ((exitCode = receipt_to_sign_data(receipt, &toSignData)) != BNS_OK) {
     goto receipt_check_sig_fail;
   }
+  //verify signature
   if ((exitCode = verify_signature(serverWalletAddress, toSignData,
                                    &receipt->sigServer)) != BNS_OK) {
     goto receipt_check_sig_fail;
