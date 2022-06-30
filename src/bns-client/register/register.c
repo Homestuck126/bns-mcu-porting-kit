@@ -18,25 +18,26 @@ char* build_check_register_url(const char* const serverUrl,
   }
   return url;
 }
-
+//call bns check register
 bns_exit_code_t bns_check_register(const bns_client_t* const bnsClient,
                                    bool* const               result) {
   bns_exit_code_t exitCode = BNS_OK;
   char*           url      = NULL;
   char*           res      = NULL;
   LOG_DEBUG("bns_check_register() start");
-
+  //check existence
   if (!bnsClient) {
     exitCode = BNS_CLIENT_NULL_ERROR;
     goto bns_check_register_fail;
   }
+  //built url for check register
   url = build_check_register_url(bnsClient->config.serverUrl,
                                  bnsClient->walletAddress);
   if (!url) {
     exitCode = BNS_CHECK_REGISTER_URL_NULL_ERROR;
     goto bns_check_register_fail;
   }
-
+  //use url for client
   res = bnsClient->httpClient.get(url);
   if (!res) {
     exitCode = BNS_CHECK_REGISTER_RESPONSE_NULL_ERROR;

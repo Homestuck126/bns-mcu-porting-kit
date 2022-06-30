@@ -63,12 +63,13 @@ bns_exit_code_t bns_client_init(bns_client_t* const        bnsClient,
       "nodeUrl=%s",
       privateKey, indexValueKey, serverUrl, nodeUrl);
   bns_exit_code_t exitCode;
+  //check initalization
   if ((exitCode = check_init_args(bnsClient, privateKey, indexValueKey, email,
                                   serverUrl, nodeUrl, receiptDao,
                                   httpClient)) != BNS_OK) {
     goto bns_client_init_fail;
   }
-
+  //save everything
   strncpy(bnsClient->config.privateKey, privateKey, PRIVATE_KEY_STR_LEN - 1);
 
   bns_strdup(&bnsClient->config.indexValueKey, indexValueKey);
@@ -83,17 +84,19 @@ bns_exit_code_t bns_client_init(bns_client_t* const        bnsClient,
   bnsClient->receiptDao = *receiptDao;
   bnsClient->httpClient = *httpClient;
   if (callback) { bnsClient->callback = *callback; }
-
+  //initalize walletAddress
   bnsClient->walletAddress[0] = '0';
   bnsClient->walletAddress[1] = 'x';
-
+  //encrypt t
   char          t[]                       = " ";
   unsigned char sha3Result[SHA3_BYTE_LEN] = {0};
   bns_sha3((unsigned char*)t, (int)strlen(t), sha3Result);
   sig_t sig = {0};
+  //sign sha3Result
   if ((exitCode = bns_sign(sha3Result, privateKey, &sig)) != BNS_OK) {
     goto bns_client_init_fail;
   }
+  //get publicKey
   char publicKey[PUBLIC_KEY_STR_LEN] = {0};
   if ((exitCode = recover_public_key(sha3Result, &sig, publicKey)) != BNS_OK) {
     goto bns_client_init_fail;
@@ -101,29 +104,30 @@ bns_exit_code_t bns_client_init(bns_client_t* const        bnsClient,
   strcpy(bnsClient->publicKey, publicKey);
 
   strcpy(bnsClient->walletAddress, "0x");
+  //recover address as publicKey
   recover_address(publicKey, (bnsClient->walletAddress + 2));
-
+  //set count of verify
   if (!bnsClient->verifyAfterLedgerInputCount) {
     if ((exitCode = bns_client_set_verify_after_ledger_input_count(
              bnsClient, DEFAULT_VERIFY_AFTER_LEDGER_INPUT_COUNT)) != BNS_OK) {
       goto bns_client_init_fail;
     }
   }
-
+  //set retry count
   if (!bnsClient->maxRetryCount) {
     if ((exitCode = bns_client_set_retry_count(
              bnsClient, DEFAULT_MAX_RETRY_COUNT)) != BNS_OK) {
       goto bns_client_init_fail;
     }
   }
-
+  //set client retry
   if (!bnsClient->retryDelaySec) {
     if ((exitCode = bns_client_set_retry_delay_sec(
              bnsClient, DEFAULT_RETRY_DELAY_SEC)) != BNS_OK) {
       goto bns_client_init_fail;
     }
   }
-
+  //relogin
   if ((exitCode = bns_relogin(bnsClient)) != BNS_OK) {
     goto bns_client_init_fail;
   }
@@ -156,13 +160,14 @@ bns_exit_code_t bns_client_enable_binary_ledger_input(
   bnsClient->httpClient.post_multi = post_multi;
   return BNS_OK;
 }
-
+//bns client callbacks and 
 bns_exit_code_t bns_client_ledger_input(const bns_client_t* const bnsClient,
                                         const char* const         cmdJson) {
   LOG_INFO("bns_client_ledger_input() begin, cmdJson=%s", cmdJson);
   bns_exit_code_t       exitCode;
   ledger_input_result_t ledgerInputResult = {0};
   receipt_locator_t     receiptLocator    = {0};
+  //check existence
   if (!bnsClient) {
     exitCode = BNS_CLIENT_NULL_ERROR;
     goto bns_client_ledger_input_fail;
@@ -174,13 +179,17 @@ bns_exit_code_t bns_client_ledger_input(const bns_client_t* const bnsClient,
   size_t retryCount = bnsClient->maxRetryCount ? *bnsClient->maxRetryCount : 0;
   do {
     if (retryCount > 0) { retryCount--; }
+    //free data
     receipt_locator_free(&receiptLocator);
     ledger_input_result_free(&ledgerInputResult);
+    //get receipt locator
     exitCode = bns_get_receipt_locator(bnsClient, &receiptLocator);
     if (exitCode != BNS_OK) { goto bns_client_ledger_input_fail; }
+    //call bns post for ledgerInput
     exitCode = bns_post_ledger_input(bnsClient, cmdJson, &receiptLocator,
                                      &ledgerInputResult);
     if (exitCode == BNS_OK) { break; }
+    //check indexValue and clearenceOrder for ledgerInput
     if (is_ledger_input_resend_error(exitCode)) {
       LOG_WARN("bns_client_ledger_input() resend, " BNS_EXIT_CODE_PRINT_FORMAT,
                bns_strerror(exitCode));
@@ -205,6 +214,7 @@ bns_exit_code_t bns_client_ledger_input(const bns_client_t* const bnsClient,
     bnsClient->callback.obtain_done_clearance_order_event(
         ledgerInputResult.doneClearanceOrder);
   }
+  //cleanup
   receipt_locator_free(&receiptLocator);
   bool verifyAfterLedgerInput =
       bnsClient->verifyAfterLedgerInputCount
@@ -235,6 +245,7 @@ bns_exit_code_t bns_client_binary_ledger_input(
   bns_exit_code_t              exitCode;
   binary_ledger_input_result_t binaryLedgerInputResult = {0};
   receipt_locator_t            receiptLocator          = {0};
+  //check existence 
   if (!bnsClient) {
     exitCode = BNS_CLIENT_NULL_ERROR;
     goto bns_client_ledger_input_fail;
@@ -359,24 +370,31 @@ bns_exit_code_t bns_client_verify_by_done_co(
   LOG_DEBUG("bns_client_verify_by_done_co() begin");
   bns_exit_code_t exitCode = BNS_OK;
   receipt_t*      receipt  = NULL;
+  //check existence
   if (!bnsClient) {
     exitCode = BNS_CLIENT_NULL_ERROR;
     goto bns_client_verify_by_done_co_fail;
   }
   size_t toVerifyCount = verifyCount;
   size_t receiptCount  = 0;
+  //
   do {
+    //count is equal to less than toVerifyCount 
     size_t count =
         toVerifyCount <= VERIFY_BATCH_SIZE ? toVerifyCount : VERIFY_BATCH_SIZE;
+    //reallocate space for receipt
     receipt = (receipt_t*)malloc(sizeof(receipt_t) * count);
     memset(receipt, 0, sizeof(receipt_t) * count);
+    //
     bnsClient->receiptDao.findPageByClearanceOrderEqualOrLessThan(
         doneCO, 0, count, receipt, &receiptCount);
     for (size_t i = 0; i < receiptCount; i++) {
       merkle_proof_t          merkleProof         = {0};
       verify_receipt_result_t verifyReceiptResult = {0};
+      //verify data
       exitCode =
           verify(bnsClient, &receipt[i], &merkleProof, &verifyReceiptResult);
+          //
       if (bnsClient->callback.get_verify_receipt_result) {
         bnsClient->callback.get_verify_receipt_result
         (&receipt[i], &merkleProof, &verifyReceiptResult);
@@ -397,18 +415,17 @@ bns_client_verify_by_done_co_fail:
             bns_strerror(exitCode));
   return exitCode;
 }
-
+//get done clearanceOrder from bns client server 
 bns_exit_code_t bns_get_done_clearance_order(
     const bns_client_t* const bnsClient, clearance_order_t* const doneCO) {
   size_t count = 0;
 bns_get_done_clearance_order_beg:
   LOG_INFO("bns_get_done_clearance_order() begin");
-  //why CJSON? 
   bns_exit_code_t exitCode = BNS_OK;
   cJSON*          root     = NULL;
   char*           url      = NULL;
   char*           res      = NULL;
-
+  //check existence 
   if (!bnsClient) {
     exitCode = BNS_CLIENT_NULL_ERROR;
     goto bns_get_done_clearance_order_fail;
@@ -421,20 +438,20 @@ bns_get_done_clearance_order_beg:
     exitCode = BNS_DONE_CO_NULL_ERROR;
     goto bns_get_done_clearance_order_fail;
   }
-
+  //allocate space for url 
   url = (char*)malloc(sizeof(char) *
                       (strlen(bnsClient->config.serverUrl) +
                        strlen(LEDGER_DONE_CLEARANCE_ORDER_PATH) + 1));
   strcpy(url, bnsClient->config.serverUrl);
   strcat(url, LEDGER_DONE_CLEARANCE_ORDER_PATH);
-
+  //get url using bnsClient
   res = bnsClient->httpClient.get(url);
   if (!res) {
     exitCode = BNS_GET_DONE_CO_RESPONSE_NULL_ERROR;
     goto bns_get_done_clearance_order_fail;
   }
   BNS_FREE(url);
-
+  //turns res into a decimal
   *doneCO = strtoll(res, NULL, 10);
 
   BNS_FREE(res);
@@ -443,7 +460,7 @@ bns_get_done_clearance_order_beg:
   return exitCode;
 bns_get_done_clearance_order_fail:
   if (url) { BNS_FREE(url); }
-  //why is this a CJSON
+
   cJSON_Delete(root);
   LOG_ERROR("bns_get_done_clearance_order() error, " BNS_EXIT_CODE_PRINT_FORMAT,
             bns_strerror(exitCode));
