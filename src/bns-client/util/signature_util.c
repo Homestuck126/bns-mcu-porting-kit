@@ -11,7 +11,7 @@
 
 #define MESSAGE_PREFIX_1 0x19
 #define MESSAGE_PREFIX_2 "Ethereum Signed Message:\n"
-
+//encrypt toSignData
 void bns_sha3(const unsigned char* toSignData,
               size_t               size,
               unsigned char*       sha3Result) {
@@ -21,7 +21,7 @@ void bns_sha3(const unsigned char* toSignData,
   keccak_update(&ctx, toSignData, size);
   keccak_final(&ctx, sha3Result);
 }
-
+//encrypted toSignData and message. 
 void bns_sha3_prefix(const unsigned char* toSignData,
                      size_t               size,
                      unsigned char*       sha3Result) {
@@ -41,14 +41,15 @@ void bns_sha3_prefix(const unsigned char* toSignData,
   keccak_final(&ctx, sha3Result);
   if (message) { BNS_FREE(message); }
 }
-
+//create signature
 bns_exit_code_t bns_sign(const unsigned char* sha3Result,
                          const char*          privateKey,
                          sig_t*               sig) {
   if (!sha3Result || !privateKey || !sig) { return BNS_SIGN_ERROR; }
   char          tempPrivateKey[PRIVATE_KEY_STR_LEN] = {0};
   unsigned char bytePrivateKey[PRIVATE_KEY_BYTES]   = {0};
-
+  //if privatekeyLen is less than the length, set memory and add priavte key to tempPrivate key
+  //if it is greater, then copy privatekey to tempPrivate key
   size_t privateKeyLen = strlen(privateKey);
   if (privateKeyLen <= (PRIVATE_KEY_STR_LEN - 1)) {
     memset(tempPrivateKey, '0', (PRIVATE_KEY_STR_LEN - 1 - privateKeyLen));
@@ -56,9 +57,9 @@ bns_exit_code_t bns_sign(const unsigned char* sha3Result,
   } else if (privateKeyLen > (PRIVATE_KEY_STR_LEN - 1)) {
     strncpy(tempPrivateKey, privateKey, PRIVATE_KEY_STR_LEN - 1);
   }
-
+  //turn hex to byte
   bns_hex_to_byte(tempPrivateKey, PRIVATE_KEY_STR_LEN - 1, bytePrivateKey);
-
+  //encrypt? 
   secp256k1_context* context;
   context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN |
                                      SECP256K1_CONTEXT_VERIFY);  // NOLINT
@@ -83,7 +84,7 @@ bns_exit_code_t bns_sign(const unsigned char* sha3Result,
 
   return BNS_OK;
 }
-
+//gets public key from signature
 bns_exit_code_t recover_public_key(const unsigned char* const shaResult,
                                    const sig_t* const         sig,
                                    char* const                publicKey) {
@@ -91,11 +92,12 @@ bns_exit_code_t recover_public_key(const unsigned char* const shaResult,
   int v;
   v = (int)strtol(sig->v, NULL, 16);
   v -= 27;
-
+  //change signature hex to bytw
   unsigned char sigRAndV[HASH_BYTES * 2] = {0};
   bns_hex_to_byte(sig->r, SIG_R_STR_LEN - 1, sigRAndV);
   bns_hex_to_byte(sig->s, SIG_S_STR_LEN - 1, sigRAndV + HASH_BYTES);
   secp256k1_context* context;
+  //encryption? 
   context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN |
                                      SECP256K1_CONTEXT_VERIFY);  // NOLINT
   secp256k1_ecdsa_recoverable_signature rawSig;
@@ -114,28 +116,31 @@ bns_exit_code_t recover_public_key(const unsigned char* const shaResult,
   secp256k1_ec_pubkey_serialize(context, serializedPubkey, &public_key_len,
                                 &rawPubkey,
                                 SECP256K1_EC_UNCOMPRESSED);  // NOLINT
-
+  //get publicKey
   bns_byte_to_hex(serializedPubkey + 1, PUBLIC_KEY_BYTES, publicKey);
   LOG_DEBUG("recover_public_key() end, publicKey={%s}", publicKey);
   secp256k1_context_destroy(context);
   return BNS_OK;
 }
-
+//get address from publicKey
 void recover_address(const char* const publicKey, char* const address) {
   if (!publicKey || !address) { return; }
   unsigned char publicKeyBytes[PUBLIC_KEY_BYTES]   = {0};
   unsigned char sha3Result[HASH_BYTES]             = {0};
   unsigned char recoverAddressBytes[ADDRESS_BYTES] = {0};
-
+  //turn publickey into byte
   bns_hex_to_byte(publicKey, PUBLIC_KEY_STR_LEN - 1, publicKeyBytes);
+  //encrypt
   bns_sha3(publicKeyBytes, PUBLIC_KEY_BYTES, sha3Result);
+  //get addressbytes from encrypted result
   for (int i = 0; i < ADDRESS_BYTES; i++) {
     recoverAddressBytes[i] = sha3Result[i + 12];
   }
+  //get address as bytes 
   bns_byte_to_hex(recoverAddressBytes, ADDRESS_BYTES, address);
   LOG_DEBUG("recover_address() end, address=%s", address);
 }
-
+//verify signature via address
 bns_exit_code_t verify_signature(const char* const  address,
                                  const char* const  toSignData,
                                  const sig_t* const sig) {
@@ -156,14 +161,16 @@ bns_exit_code_t verify_signature(const char* const  address,
     if (recover_public_key(shaSignData, sig, publicKey) != BNS_OK) {
       return BNS_VERIFY_SIGNATURE_ERROR;
     }
-
+    //get address from public key
     recover_address(publicKey, recoverAddress);
     bool result;
+    //check that address is the same as recoverAddress
     if (strncmp(address, "0x", 2) == 0) {
       result = bns_equals_ignore_case(&address[2], recoverAddress);
     } else {
       result = bns_equals_ignore_case(address, recoverAddress);
     }
+    //if true, ok, false, error
     LOG_DEBUG("verify_signature() end, result=%s", result ? "true" : "false");
     if (result == true) {
       exitCode = BNS_OK;
@@ -171,19 +178,21 @@ bns_exit_code_t verify_signature(const char* const  address,
       exitCode = BNS_VERIFY_SIGNATURE_ERROR;
     }
   }
+  // if error, 
   if (exitCode == BNS_VERIFY_SIGNATURE_ERROR) {
     char publicKey[PUBLIC_KEY_STR_LEN]   = {0};
     char recoverAddress[ADDRESS_STR_LEN] = {0};
-
+    //get encrypted toSignData
     unsigned char shaSignData[SHA3_STR_LEN] = {0};
     bns_sha3((unsigned char*)toSignData, strlen(toSignData), shaSignData);
-
+    //check publickey
     if (recover_public_key(shaSignData, sig, publicKey) != BNS_OK) {
       return BNS_VERIFY_SIGNATURE_ERROR;
     }
-
+    //get address
     recover_address(publicKey, recoverAddress);
     bool result;
+    //check address
     if (strncmp(address, "0x", 2) == 0) {
       result = bns_equals_ignore_case(&address[2], recoverAddress);
     } else {

@@ -33,7 +33,7 @@
 #define DEFAULT_RETRY_DELAY_SEC 5
 
 #define VERIFY_BATCH_SIZE 1
-
+//check initalized arguments and they all exist 
 _CHECK_RESULT
 bns_exit_code_t bns_client_init(bns_client_t*                bnsClient,
                                 const char*                  privateKey,
@@ -44,7 +44,7 @@ bns_exit_code_t bns_client_init(bns_client_t*                bnsClient,
                                 const receipt_dao_t*         receiptDao,
                                 const http_client_t*         httpClient,
                                 const bns_client_callback_t* callback);
-
+//enable post_multi
 _CHECK_RESULT
 bns_exit_code_t bns_client_enable_binary_ledger_input(
     bns_client_t* bnsClient,
@@ -71,22 +71,22 @@ _CHECK_RESULT
 bns_exit_code_t bns_client_verify_by_done_co(const bns_client_t* bnsClient,
                                              size_t              verifyCount,
                                              clearance_order_t   doneCO);
-
+//Set the count of verify After Ledger Input
 _CHECK_RESULT
 bns_exit_code_t bns_client_set_verify_after_ledger_input_count(
     bns_client_t* bnsClient, size_t count);
-
+//Set retryDelaysize and if BNS client exists for size
 _CHECK_RESULT
 bns_exit_code_t bns_client_set_retry_count(bns_client_t* bnsClient,
                                            size_t        count);
-
+//Set retryDelaysize and if BNS client exists for seconds
 _CHECK_RESULT
 bns_exit_code_t bns_client_set_retry_delay_sec(bns_client_t* bnsClient,
                                                size_t        sec);
-
+//call relogin
 _CHECK_RESULT
 bns_exit_code_t bns_relogin(const bns_client_t* bnsClient);
-
+// Frees up data used by BNS_Client
 void bns_client_free(bns_client_t* bnsClient);
 
 #endif  // BNS_CLIENT_BNS_CLIENT_H

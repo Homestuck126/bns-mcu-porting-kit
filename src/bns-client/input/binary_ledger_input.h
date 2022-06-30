@@ -9,9 +9,9 @@
 
 #define BNS_APPLICATION_JSON "application/json"
 #define BNS_APPLICATION_OCTET_STREAM "application/octet-stream"
-
+//build url for post in the form of serverUrl, Binary Ledger
 void build_post_binary_ledger_input_url(char** url, const char* serverUrl);
-
+//call bns server and check ledger input
 _CHECK_RESULT
 bns_exit_code_t bns_post_binary_ledger_input(
     const bns_client_t*           bnsClient,
@@ -19,11 +19,11 @@ bns_exit_code_t bns_post_binary_ledger_input(
     const receipt_locator_t*      receiptLocator,
     const binary_info_t*          binaryInfo,
     binary_ledger_input_result_t* binaryLedgerInputResult);
-
+//go over binary Ledger Input Response and ensure content is expected 
 _CHECK_RESULT
 bns_exit_code_t check_and_parse_binary_ledger_input_response(
     const char* res, binary_ledger_input_result_t* binaryLedgerInputResult);
-
+// free binary ledger input
 void binary_ledger_input_result_free(
     binary_ledger_input_result_t* binaryLedgerInputResult);
 

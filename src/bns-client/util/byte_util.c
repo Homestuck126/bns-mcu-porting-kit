@@ -19,7 +19,7 @@ void bns_hex_to_byte(const char* hex, size_t size, unsigned char* byte) {
         byte[j] += (tolower(hex[i]) - 'a' + 10) * 16;
       }
     }
-    //if size is odd
+    //always executes? 
     if (i >= -1) {
       if (isdigit(hex[i + 1])) {
         byte[j] += (hex[i + 1] - '0');

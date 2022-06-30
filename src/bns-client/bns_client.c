@@ -14,6 +14,7 @@
 #include <unistd.h>
 
 _CHECK_RESULT
+//check initalized arguments and they all exist 
 bns_exit_code_t check_init_args(const bns_client_t* const  bnsClient,
                                 const char* const          privateKey,
                                 const char* const          indexValueKey,
@@ -22,6 +23,7 @@ bns_exit_code_t check_init_args(const bns_client_t* const  bnsClient,
                                 const char* const          nodeUrl,
                                 const receipt_dao_t* const receiptDao,
                                 const http_client_t* const httpClient) {
+  
   LOG_DEBUG("check_init_args() begin");
   if (!bnsClient) { return BNS_CLIENT_NULL_ERROR; }
   if (!privateKey) { return BNS_PRIVATE_KEY_NULL_ERROR; }
@@ -46,7 +48,7 @@ bns_exit_code_t check_init_args(const bns_client_t* const  bnsClient,
   }
   return BNS_OK;
 }
-
+//
 bns_exit_code_t bns_client_init(bns_client_t* const        bnsClient,
                                 const char* const          privateKey,
                                 const char* const          indexValueKey,
@@ -144,10 +146,11 @@ bns_client_init_fail:
             bns_strerror(exitCode));
   return exitCode;
 }
-
+//enable post_multi
 bns_exit_code_t bns_client_enable_binary_ledger_input(
     bns_client_t* const bnsClient,
     char* (*post_multi)(const char*, const bns_form_t*, const bns_form_t*)) {
+      //enable post_multi?
   if (!bnsClient) { return BNS_CLIENT_NULL_ERROR; }
   if (!post_multi) { return BNS_CLIENT_HTTP_CLIENT_BNS_POST_MULTI_NULL_ERROR; }
   bnsClient->httpClient.post_multi = post_multi;
@@ -304,14 +307,16 @@ bns_client_ledger_input_fail:
       bns_strerror(exitCode));
   return exitCode;
 }
-
+//call relogin
 bns_exit_code_t bns_relogin(const bns_client_t* const bnsClient) {
   LOG_INFO("bns_relogin() begin");
   bns_exit_code_t exitCode;
+  //check existence 
   if (!bnsClient) {
     exitCode = BNS_CLIENT_NULL_ERROR;
     goto bns_relogin_fail;
   }
+  //build login
   if ((exitCode = bns_login(bnsClient)) != BNS_OK) { goto bns_relogin_fail; }
   return exitCode;
 

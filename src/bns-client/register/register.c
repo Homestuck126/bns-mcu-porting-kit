@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+//build check register url
 char* build_check_register_url(const char* const serverUrl,
                                const char* const callerAddress) {
   if (!serverUrl) { return NULL; }
@@ -57,7 +57,7 @@ bns_check_register_fail:
             bns_strerror(exitCode));
   return exitCode;
 }
-
+//clean check register
 void register_request_free(register_request_t* const registerRequest) {
   if (registerRequest) {
     if (registerRequest->email) { BNS_FREE(registerRequest->email); }

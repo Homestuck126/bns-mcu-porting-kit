@@ -14,7 +14,7 @@
 
 static CURL*       curl = NULL;
 struct curl_slist* hs   = NULL;
-//allocate space and put chunks into memory block 
+//allocate space and put allocates new data while returning the additonal data
 static size_t curlDataCallback(void*  chunks,
                                size_t chunkSize,
                                size_t chunksCount,
@@ -36,16 +36,22 @@ static size_t curlDataCallback(void*  chunks,
   block->size += additionalDataSize;
   //set the end data to 0
   block->data[block->size] = 0;
-
+  //return new allocated size 
   return additionalDataSize;
 }
-
+//initalize curl
 int ssl_init() {
+  //set up curl
   CURLcode res = curl_global_init(CURL_GLOBAL_ALL);
+  // if res is not ok, fail
   if (res != CURLE_OK) { goto ssl_init_fail; }
+  //if null, error
   if ((curl = curl_easy_init()) == NULL) { return !CURLE_OK; }
+  //add APPLICATION_JSON to start of hs
   hs = curl_slist_append(hs, APPLICATION_JSON);
+  //add device-type:sdk to start of hs 
   hs = curl_slist_append(hs, "device-type:sdk");
+  //return
   return res;
 ssl_init_fail:
   curl_slist_free_all(hs);
@@ -53,6 +59,7 @@ ssl_init_fail:
   return res;
 }
 
+//reset curl
 int ssl_reset() {
   CURLcode res = 0;
   if (!curl) {
@@ -98,20 +105,20 @@ int ssl_reset() {
   }
   return res;
 }
-
+//curl cleanup
 void ssl_clean() {
   curl_slist_free_all(hs);
   curl_easy_cleanup(curl);
-
   curl_global_cleanup();
 }
 
-// Get information form BNS Server
+// Get information from BNS Server
 char* bns_get(const char* const url) {
   LOG_INFO("bns_get() begin() url=%s", url);
   CURLcode    res   = 0;
+  // initalize memory block as empty
   MemoryBlock block = {.data = NULL, .size = 0};
-
+  //if error, cleanup
   if ((res = ssl_reset()) != CURLE_OK) { goto cleanupLabel; }
   if ((res = curl_easy_setopt(curl, CURLOPT_URL, url)) != CURLE_OK) {
     goto cleanupLabel;
@@ -121,9 +128,10 @@ char* bns_get(const char* const url) {
     goto cleanupLabel;
   }
   if ((res = curl_easy_perform(curl)) != CURLE_OK) { goto cleanupLabel; }
-
+  //
   LOG_INFO("bns_get() end, content-length=%zu bytes, content=%s", block.size,
            block.data);
+  //return data in block
   return block.data;
 
 cleanupLabel:

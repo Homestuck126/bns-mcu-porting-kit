@@ -10,13 +10,13 @@
   "serverWalletAddress=%s)"
 #define BNS_SERVER_INFO_TO_PRINT_ARGS(bnsServerInfo) \
   bnsServerInfo->contractAddress, (bnsServerInfo)->serverWalletAddress
-
+//built serverUrl 
 void build_get_bns_server_info_url(char** url, const char* serverUrl);
-
+//get server info from bns
 _CHECK_RESULT
 bns_exit_code_t bns_get_server_info(const bns_client_t* bnsClient,
                                     bns_server_info_t*  bnsServerInfo);
-
+//save bns ServerInfo and check it works 
 _CHECK_RESULT
 bns_exit_code_t check_and_parse_bns_server_info_response(
     const char* res, bns_server_info_t* bnsServerInfo);

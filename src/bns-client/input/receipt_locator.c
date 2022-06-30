@@ -6,20 +6,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
+//build receipt locator url with server, path and indexValueKey
 void build_get_receipt_locator_url(char**            url,
                                    const char* const serverUrl,
                                    const char* const indexValueKey) {
   if (!url) { return; }
+  //get size
   size_t size = strlen(serverUrl) + strlen(LEDGER_RECEIPT_LOCATOR_PATH) +
                 strlen(indexValueKey);
+  //reallocate space for url and combine url
   *url = (char*)malloc(sizeof(char) * (size + 1));
   if (*url) {
     sprintf(*url, "%s%s%s", serverUrl, LEDGER_RECEIPT_LOCATOR_PATH,
             indexValueKey);
   }
 }
-
+//get receiptLocator from bns Client
 bns_exit_code_t bns_get_receipt_locator(
     const bns_client_t* const bnsClient,
     receipt_locator_t* const  receiptLocator) {
@@ -29,7 +31,7 @@ bns_get_receipt_locator_beg:
   bns_exit_code_t exitCode;
   char*           url = NULL;
   char*           res = NULL;
-
+//check existence
   if (!bnsClient) {
     exitCode = BNS_CLIENT_NULL_ERROR;
     goto bns_get_receipt_locator_fail;
@@ -50,10 +52,10 @@ bns_get_receipt_locator_beg:
     exitCode = BNS_RECEIPT_LOCATOR_NULL_ERROR;
     goto bns_get_receipt_locator_fail;
   }
-
+  //built url
   build_get_receipt_locator_url(&url, bnsClient->config.serverUrl,
                                 bnsClient->config.indexValueKey);
-
+  //use url on Client to get return
   res = bnsClient->httpClient.get(url);
   if (!res) {
     exitCode = BNS_GET_RECEIPT_LOCATOR_RESPONSE_NULL_ERROR;
@@ -61,7 +63,7 @@ bns_get_receipt_locator_beg:
   }
 
   BNS_FREE(url);
-
+  //checked receipt locator
   if ((exitCode = check_and_parse_receipt_locator_response(
            res, bnsClient->config.indexValueKey, receiptLocator)) != BNS_OK) {
     goto bns_get_receipt_locator_fail;
@@ -72,7 +74,7 @@ bns_get_receipt_locator_beg:
   LOG_DEBUG("bns_get_receipt_locator() end, " RECEIPT_LOCATOR_PRINT_FORMAT,
             RECEIPT_LOCATOR_TO_PRINT_ARGS(receiptLocator));
   return exitCode;
-
+//cleanup and check 
 bns_get_receipt_locator_fail:
   if (url) { BNS_FREE(url); }
   if (res) { BNS_FREE(res); }
@@ -88,7 +90,7 @@ bns_get_receipt_locator_fail:
   }
   return exitCode;
 }
-
+//check responses in cJson then build receiptLocator
 bns_exit_code_t check_and_parse_receipt_locator_response(
     const char* const        res,
     const char* const        indexValueKey,
@@ -96,6 +98,7 @@ bns_exit_code_t check_and_parse_receipt_locator_response(
   LOG_DEBUG("check_receipt_locator_response() begin, res=%s", res);
   bns_exit_code_t exitCode;
   cJSON*          root = NULL;
+  //check existence
   if (!indexValueKey) {
     exitCode = BNS_INDEX_VALUE_KEY_NULL_ERROR;
     goto check_receipt_locator_response_fail;
@@ -104,9 +107,9 @@ bns_exit_code_t check_and_parse_receipt_locator_response(
     exitCode = BNS_RECEIPT_LOCATOR_NULL_ERROR;
     goto check_receipt_locator_response_fail;
   }
-
+  //parse through res
   root = cJSON_Parse(res);
-
+  //get status and check then cleanup
   cJSON* temp = cJSON_GetObjectItem(root, "status");
   if (!cJSON_IsString(temp)) {
     exitCode = BNS_RESPONSE_STATUS_PARSE_ERROR;
@@ -118,31 +121,33 @@ bns_exit_code_t check_and_parse_receipt_locator_response(
   }
   cJSON_DetachItemViaPointer(root, temp);
   cJSON_Delete(temp);
-
+  //get status and check then cleanup
   temp = cJSON_GetObjectItem(root, "clearanceOrder");
 
   if (!cJSON_IsNumber(temp)) {
     exitCode = BNS_RESPONSE_CO_PARSE_ERROR;
     goto check_receipt_locator_response_fail;
   }
+  //save clearanceOrder
   clearance_order_t clearanceOrder = temp->valueint;
   cJSON_DetachItemViaPointer(root, temp);
   cJSON_Delete(temp);
-
+  //get sn and check then cleanup
   temp = cJSON_GetObjectItem(root, "sn");
   if (!cJSON_IsNumber(temp)) {
     exitCode = BNS_RESPONSE_SN_PARSE_ERROR;
     goto check_receipt_locator_response_fail;
   }
+  //save sn
   sn_t sn = temp->valueint;
   cJSON_DetachItemViaPointer(root, temp);
   cJSON_Delete(temp);
-
+  //get receipt Locator
   if ((exitCode = build_receipt_locator(indexValueKey, clearanceOrder, sn,
                                         receiptLocator)) != BNS_OK) {
     goto check_receipt_locator_response_fail;
   }
-
+  //cleanup
   cJSON_Delete(root);
   LOG_DEBUG("check_receipt_locator_response() end");
   return exitCode;
@@ -154,12 +159,13 @@ check_receipt_locator_response_fail:
       bns_strerror(exitCode));
   return exitCode;
 }
-
+//build indexValue of receipt Locator
 bns_exit_code_t build_receipt_locator(const char* const        indexValueKey,
                                       const clearance_order_t  clearanceOrder,
                                       const sn_t               sn,
                                       receipt_locator_t* const receiptLocator) {
   bns_exit_code_t exitCode = BNS_OK;
+  //check existence and errors
   if (!indexValueKey) {
     exitCode = BNS_INDEX_VALUE_KEY_NULL_ERROR;
     goto build_receipt_locator_fail;
@@ -176,9 +182,11 @@ bns_exit_code_t build_receipt_locator(const char* const        indexValueKey,
     exitCode = BNS_RECEIPT_LOCATOR_NULL_ERROR;
     goto build_receipt_locator_fail;
   }
+  //check clearanceOrder of receipt Locator
   receiptLocator->clearanceOrder = clearanceOrder;
   size_t size                    = strlen(indexValueKey) + 2 + bns_digits(sn);
   receiptLocator->indexValue     = (char*)malloc(sizeof(char) * (size + 1));
+  //combine indexValue as indexValue and sn
   sprintf(receiptLocator->indexValue, "%s_R%lld", indexValueKey, sn);
   LOG_DEBUG("build_receipt_locator() end" RECEIPT_LOCATOR_PRINT_FORMAT,
             RECEIPT_LOCATOR_TO_PRINT_ARGS(receiptLocator));
@@ -189,7 +197,7 @@ build_receipt_locator_fail:
             bns_strerror(exitCode));
   return exitCode;
 }
-
+//free receipt locators indexValue
 void receipt_locator_free(receipt_locator_t* const receiptLocator) {
   if (receiptLocator) {
     if (receiptLocator->indexValue) { BNS_FREE(receiptLocator->indexValue); }

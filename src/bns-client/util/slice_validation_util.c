@@ -5,7 +5,7 @@
 #include <bns-client/util/string_util.h>
 #include <bns-client/verify/slice.h>
 #include <string.h>
-
+//check if leaf node is same as pbPairs 
 bns_exit_code_t is_leaf_node(const slice_t* const   slice,
                              const pb_pair_t* const pbPair) {
   bns_exit_code_t exitCode;
@@ -22,27 +22,31 @@ bns_exit_code_t is_leaf_node(const slice_t* const   slice,
   }
   LOG_DEBUG("is_leaf_node() begin, " SLICE_PRINT_FORMAT,
             SLICE_TO_PRINT_ARGS(slice));
-  //
+  //intalizes leafNodeHash as size hash length as empty 
   char leafNodeHash[HASH_STR_LEN] = {0};
+  //get leaf nodes hash
   if ((exitCode = get_leaf_node_hash(slice, leafNodeHash)) != BNS_OK) {
     goto is_leaf_node_fail;
   }
-
+  //sets size to size * 64 
   size_t size = pbPair->size * (HASH_STR_LEN - 1);
+  //allocate size for pbPairValue 
   pbPairValue = (char*)malloc(sizeof(char) * (size + 1));
   memset(pbPairValue, 0, size + 1);
+  //put pb pair values into pbPairValue combined
   for (size_t i = 0; i < pbPair->size; i++) {
     strcat(pbPairValue, pbPair->pbPairValue[i].value);
   }
+  //allocate size for pbPair
   pbPairValueByte = (unsigned char*)malloc(sizeof(unsigned char) * (size / 2));
   bns_hex_to_byte(pbPairValue, size, pbPairValueByte);
   BNS_FREE(pbPairValue);
-
+  //encrypt pbPairValueByte
   char hashValue[HASH_STR_LEN] = {0};
   sha256(pbPairValueByte, size / 2, hashValue);
 
   BNS_FREE(pbPairValueByte);
-
+  //check that  leafnodeHash is same as Hash
   if (bns_equals_ignore_case(leafNodeHash, hashValue) != true) {
     exitCode = BNS_PB_PAIR_IN_LEAF_NODE_ERROR;
     goto is_leaf_node_fail;
@@ -55,7 +59,7 @@ is_leaf_node_fail:
             bns_strerror(exitCode));
   return exitCode;
 }
-//grabs either slices 0 or slices 1 from hashStringList dependes on index
+//grabs either slices 0 or 1 from hashStringList dependeing on index
 bns_exit_code_t get_leaf_node_hash(const slice_t* const slice,
                                    char*                leafNodeHash) {
   bns_exit_code_t exitCode = BNS_OK;
@@ -96,10 +100,11 @@ get_leaf_node_hash_fail:
             bns_strerror(exitCode));
   return exitCode;
 }
-
+//get root hash from slice 
 bns_exit_code_t eval_root_hash_from_slice(const slice_t* const slice,
                                           bool* const          result) {
   bns_exit_code_t exitCode = BNS_OK;
+  //check existence of parameters
   if (!slice) {
     exitCode = BNS_SLICE_NULL_ERROR;
     goto check_slice_fail;
@@ -108,23 +113,30 @@ bns_exit_code_t eval_root_hash_from_slice(const slice_t* const slice,
     exitCode = BNS_OUTPUT_NULL_ERROR;
     goto check_slice_fail;
   }
+  //check slice
   LOG_DEBUG("check_slice() begin, " SLICE_PRINT_FORMAT,
             SLICE_TO_PRINT_ARGS(slice));
   size_t parentIndex;
   size_t index = (size_t)slice->index;
   char   parentDigest[HASH_STR_LEN];
+  //for i > 1 
   for (size_t i = 0; index > 1; i += 2, index /= 2) {
+    //get parentIndex
     parentIndex = i + 2 + ((index / 2) == 1 ? 0 : (index / 2)) % 2;
+    //concatenate 2 hashStringLists
     char concatTwoInterNodes[(HASH_STR_LEN - 1) * 2 + 1] = {0};
     strncpy(concatTwoInterNodes, slice->hashStringList[i], HASH_STR_LEN - 1);
     strncpy(concatTwoInterNodes + HASH_STR_LEN - 1,
             slice->hashStringList[i + 1], HASH_STR_LEN - 1);
     unsigned char byteConcatString[HASH_STR_LEN] = {0};
+    //convert from hex to byte
     bns_hex_to_byte(concatTwoInterNodes, (HASH_STR_LEN - 1) * 2,
                     byteConcatString);
+    //allocate size
     memset(parentDigest, 0, sizeof(char) * HASH_STR_LEN);
+    //encrypt
     sha256(byteConcatString, strlen(concatTwoInterNodes) / 2, parentDigest);
-
+    //check that parentDigest and hashStringLists parent is the same
     if (bns_equals_n_ignore_case(parentDigest,
                                  slice->hashStringList[parentIndex],
                                  HASH_STR_LEN - 1) != true) {
@@ -133,6 +145,7 @@ bns_exit_code_t eval_root_hash_from_slice(const slice_t* const slice,
       goto check_slice_fail;
     }
   }
+  //check result as true 
   *result = true;
   LOG_DEBUG("check_slice() end");
   return exitCode;
@@ -143,7 +156,7 @@ check_slice_fail:
             bns_strerror(exitCode));
   return exitCode;
 }
-
+//get root hash
 char* slice_get_root_hash(const slice_t* const slice) {
   if (!slice) { return NULL; }
   return slice->hashStringList[slice->size - 1];

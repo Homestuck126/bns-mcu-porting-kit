@@ -9,9 +9,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-//different to spo, doesn't return a string and instead just modifies it. 
-//get command string and url for getMerklePRoof
 
+//get command string and url for getMerklePRoof
 void build_get_merkle_proof_url(
   char**                         url,
   const char* const              serverUrl,
@@ -26,7 +25,7 @@ void build_get_merkle_proof_url(
             receiptLocator->clearanceOrder, receiptLocator->indexValue);
   }
 }
-//call getMerkleProof
+//call getMerkleProof from bns
 bns_exit_code_t bns_get_merkle_proof(
     const bns_client_t* const      bnsClient,
     const receipt_locator_t* const receiptLocator,
@@ -150,7 +149,7 @@ parse_pb_pair_fail:
             bns_strerror(exitCode));
   return exitCode;
 }
-
+//forms json object for merkleProof
 bns_exit_code_t check_and_parse_merkle_proof_response(
     const char* const res, merkle_proof_t* const merkleProof) {
   LOG_DEBUG("check_and_parse_merkle_proof_response() begin");
@@ -297,7 +296,7 @@ void merkle_proof_print(const merkle_proof_t* const merkleProof) {
               merkleProof->sigServer.s, merkleProof->sigServer.v);
   LOG_BACKEND(")\n");
 }
-//NotSure
+//Get toSignData from merkleProof which is just pbPair and clearanceOrder
 bns_exit_code_t merkle_proof_to_sign_data(
     const merkle_proof_t* const merkleProof, char** const toSignData) {
   LOG_DEBUG("merkle_proof_to_sign_data() begin");
@@ -341,7 +340,7 @@ bns_exit_code_t merkle_proof_to_sign_data(
             merkleProof->pbPair.pbPairValue[i].keyHash,
             merkleProof->pbPair.pbPairValue[i].value);
   }
-  // formats it to be 
+  // formats it to have clearanceOrder
   sprintf((*toSignData) + strlen(*toSignData), "%lld",
           merkleProof->clearanceOrder);
   BNS_FREE(sliceString);
@@ -353,7 +352,7 @@ merkle_proof_to_sign_data_fail:
             bns_strerror(exitCode));
   return exitCode;
 }
-
+//check hash of receipt is the same as pbPair value is the same for the receipt 
 bns_exit_code_t check_receipt_in_pbpair(const receipt_t* const receipt,
                                         const pb_pair_t* const pbPair) {
   bns_exit_code_t exitCode;
@@ -369,20 +368,21 @@ bns_exit_code_t check_receipt_in_pbpair(const receipt_t* const receipt,
   }
   LOG_DEBUG("check_receipt_in_pbpair() begin, " RECEIPT_PRINT_FORMAT,
             RECEIPT_TO_PRINT_ARGS(receipt));
-  
+  //go through entire pbPair
   for (size_t position = 0; position < pbPair->size; position++) {
     char indexValueHash[HASH_STR_LEN] = {0};
-    //Get signature
+    //Get encrypted indexValue
     sha256((unsigned char*)receipt->indexValue, strlen(receipt->indexValue),
            indexValueHash);
-    // if they are the same ignoring case
+    // if the pbPairs Hash and the encrypted indexValue is the same
     if (bns_equals_ignore_case(indexValueHash,
                                pbPair->pbPairValue[position].keyHash) == true) {
-      
+      //get digest value which is a hash of data from receipt
       if ((exitCode = receipt_to_digest_value(receipt, &digestValue)) !=
           BNS_OK) {
         goto check_receipt_in_pbpair_fail;
       }
+      //check that digestvalue is the same as one of the values of pbPair
       if (bns_equals_ignore_case(digestValue,
                                  pbPair->pbPairValue[position].value) == true) {
         BNS_FREE(digestValue);

@@ -37,7 +37,7 @@ slice_to_string_fail:
             bns_strerror(exitCode));
   return exitCode;
 }
-//
+//parse through the slicestring and put into slice
 bns_exit_code_t parse_slice(const char* const sliceString,
                             slice_t* const    slice) {
   LOG_DEBUG("parse_slice() begin, sliceString=%s", sliceString);

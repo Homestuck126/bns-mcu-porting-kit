@@ -39,7 +39,7 @@ void bns_strdup(char** const dest, const char* src) {
   }
   memcpy(*dest, src, len);
 }
-
+//removes end slash 
 void remove_end_slash(char* string) {
   if (!string) { return; }
   size_t len = strlen(string);

@@ -9,7 +9,7 @@
 #include <bns-client/verify/merkle_proof.h>
 #include <bns-client/verify/verify.h>
 #include <stdlib.h>
-
+//verifies data works
 bns_exit_code_t verify(const bns_client_t* const      bnsClient,
                        const receipt_t* const         receipt,
                        merkle_proof_t* const          merkleProof,
@@ -91,6 +91,7 @@ bns_exit_code_t verify(const bns_client_t* const      bnsClient,
                               &verifyReceiptResult->clearanceRecordRootHashOk);
   if (exitCode != BNS_OK) { goto verify_fail; }
   verifyReceiptResult->pass = true;
+  //insert ok status
   bns_strdup(&verifyReceiptResult->status, BNS_STATUS_OK);
   bns_strdup(&verifyReceiptResult->description, BNS_STATUS_OK);
   LOG_INFO("verify() end, " VERIFY_RECEIPT_RESULT_PRINT_FORMAT,
@@ -107,13 +108,14 @@ verify_fail:
            VERIFY_RECEIPT_RESULT_TO_PRINT_ARGS(verifyReceiptResult));
   return exitCode;
 }
-
+//Verify MerkleProof Signature 
 bns_exit_code_t verify_merkle_proof_signature(
     const char* const           serverWalletAddress,
     const merkle_proof_t* const merkleProof,
     bool* const                 result) {
   bns_exit_code_t exitCode;
   char*           toSignData = NULL;
+  //check everything exists 
   if (!serverWalletAddress) {
     exitCode = BNS_SERVER_WALLET_ADDRESS_NULL_ERROR;
     goto verify_merkle_proof_signature_fail;
@@ -126,11 +128,12 @@ bns_exit_code_t verify_merkle_proof_signature(
     exitCode = BNS_OUTPUT_NULL_ERROR;
     goto verify_merkle_proof_signature_fail;
   }
+  //to signData from merkleproof
   if ((exitCode = merkle_proof_to_sign_data(merkleProof, &toSignData)) !=
       BNS_OK) {
     goto verify_merkle_proof_signature_fail;
   }
-
+  //Verify signature via ServerWalletAddress
   if ((exitCode = verify_signature(serverWalletAddress + 2, toSignData,
                                    &merkleProof->sigServer)) != BNS_OK) {
     goto verify_merkle_proof_signature_fail;
@@ -147,12 +150,13 @@ verify_merkle_proof_signature_fail:
       bns_strerror(exitCode));
   return exitCode;
 }
-
+//check that receipt is correct with address
 bns_exit_code_t verify_receipt_signature(const char*      serverWalletAddress,
                                          const receipt_t* receipt,
                                          bool*            result) {
   LOG_DEBUG("verify_receipt_signature() start");
   bns_exit_code_t exitCode;
+  //check existence
   if (!serverWalletAddress) {
     exitCode = BNS_SERVER_WALLET_ADDRESS_NULL_ERROR;
     goto verify_receipt_signature_fail;
@@ -165,6 +169,7 @@ bns_exit_code_t verify_receipt_signature(const char*      serverWalletAddress,
     exitCode = BNS_OUTPUT_NULL_ERROR;
     goto verify_receipt_signature_fail;
   }
+  //check signature of receipt
   if ((exitCode = receipt_check_sig(serverWalletAddress, receipt)) != BNS_OK) {
     goto verify_receipt_signature_fail;
   }
@@ -177,7 +182,7 @@ verify_receipt_signature_fail:
             bns_strerror(exitCode));
   return exitCode;
 }
-
+//verify that clearanceOrder of receipt, MerkleProof, and clearanceRecord are the same
 bns_exit_code_t verify_clearance_order(
     const receipt_t* const          receipt,
     const merkle_proof_t* const     merkleProof,
@@ -185,6 +190,7 @@ bns_exit_code_t verify_clearance_order(
     bool* const                     result) {
   LOG_DEBUG("verify_clearance_order() start");
   bns_exit_code_t exitCode = BNS_OK;
+  //check existence
   if (!receipt) {
     exitCode = BNS_RECEIPT_NULL_ERROR;
     goto verify_clearanceOrderOk_fail;
@@ -201,6 +207,7 @@ bns_exit_code_t verify_clearance_order(
     exitCode = BNS_OUTPUT_NULL_ERROR;
     goto verify_clearanceOrderOk_fail;
   }
+  //check clearanceOrders
   if (receipt->clearanceOrder != merkleProof->clearanceOrder) {
     exitCode = BNS_VERIFY_CLEARANCE_ORDER_ERROR;
     goto verify_clearanceOrderOk_fail;
@@ -219,12 +226,13 @@ verify_clearanceOrderOk_fail:
             bns_strerror(exitCode));
   return exitCode;
 }
-
+//check pbPairs are correct
 bns_exit_code_t verify_pb_pair(const receipt_t* const      receipt,
                                const merkle_proof_t* const merkleProof,
                                bool* const                 result) {
   LOG_DEBUG("verify_pb_pair() start");
   bns_exit_code_t exitCode;
+  //check existence
   if (!receipt) {
     exitCode = BNS_RECEIPT_NULL_ERROR;
     goto verify_pbPairOk_fail;
@@ -237,10 +245,12 @@ bns_exit_code_t verify_pb_pair(const receipt_t* const      receipt,
     exitCode = BNS_OUTPUT_NULL_ERROR;
     goto verify_pbPairOk_fail;
   }
+  //check pbpair of receipt is same as merkleProof
   if ((exitCode = check_receipt_in_pbpair(receipt, &merkleProof->pbPair)) !=
       BNS_OK) {
     goto verify_pbPairOk_fail;
   }
+  //check that the pbPair are leafnodes in the slice
   if ((exitCode = is_leaf_node(&merkleProof->slice, &merkleProof->pbPair)) !=
       BNS_OK) {
     goto verify_pbPairOk_fail;
@@ -255,11 +265,12 @@ verify_pbPairOk_fail:
             bns_strerror(exitCode));
   return exitCode;
 }
-
+//verify root hash of slice and merkle proof
 bns_exit_code_t verify_merkle_proof_slice(const slice_t* const slice,
                                           bool* const          result) {
   LOG_DEBUG("verify_merkle_proof_slice() start");
   bns_exit_code_t exitCode;
+  //check existence
   if (!slice) {
     exitCode = BNS_SLICE_NULL_ERROR;
     goto verify_sliceOk_fail;
@@ -268,6 +279,7 @@ bns_exit_code_t verify_merkle_proof_slice(const slice_t* const slice,
     exitCode = BNS_OUTPUT_NULL_ERROR;
     goto verify_sliceOk_fail;
   }
+  //check that you can get root hash of slice
   if ((exitCode = eval_root_hash_from_slice(slice, result)) != BNS_OK) {
     goto verify_sliceOk_fail;
   }
@@ -279,13 +291,14 @@ verify_sliceOk_fail:
             bns_strerror(exitCode));
   return exitCode;
 }
-
+//check that root hash is the same for the slice and the ClearanceRecord
 bns_exit_code_t verify_root_hash(
     const merkle_proof_t* const     merkleProof,
     const clearance_record_t* const clearanceRecord,
     bool* const                     result) {
   LOG_DEBUG("verify_root_hash() start");
   bns_exit_code_t exitCode = BNS_OK;
+  //check existence 
   if (!merkleProof) {
     exitCode = BNS_MERKLE_PROOF_NULL_ERROR;
     goto verify_clearanceRecordRootHashOk_fail;
@@ -298,6 +311,7 @@ bns_exit_code_t verify_root_hash(
     exitCode = BNS_OUTPUT_NULL_ERROR;
     goto verify_clearanceRecordRootHashOk_fail;
   }
+  //check if slice root hash and clearanceRecord root hash are the same
   if (bns_equals_ignore_case(slice_get_root_hash(&merkleProof->slice),
                              clearanceRecord->rootHash) != true) {
     exitCode = BNS_VERIFY_CLEARANCE_RECORD_ROOT_HASH_ERROR;
