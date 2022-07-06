@@ -52,6 +52,7 @@ bns_exit_code_t build_ledger_input_request_json(
       BNS_OK) {
     goto build_ledger_input_request_json_fail;
   }
+  //cleanup
   ledger_input_request_free(&ledgerInputRequest);
   LOG_DEBUG("build_ledger_input_request_json() end");
   return exitCode;

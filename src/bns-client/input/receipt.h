@@ -22,7 +22,7 @@
       (receipt)->timestampSPO, (receipt)->result, (receipt)->sigClient.r,     \
       (receipt)->sigClient.s, (receipt)->sigClient.v, (receipt)->sigServer.r, \
       (receipt)->sigServer.s, (receipt)->sigServer.v
-//makes receipts clearanceORder and indexValue into 1 string
+//makes receipts clearanceOrder and indexValue into 1 string
 _CHECK_RESULT
 bns_exit_code_t receipt_first_part_to_sign_data(const receipt_t* receipt,
                                                 char**           firstPart);

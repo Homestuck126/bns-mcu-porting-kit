@@ -9,7 +9,7 @@
 void build_get_merkle_proof_url(char**                   url,
                                 const char*              serverUrl,
                                 const receipt_locator_t* receiptLocator);
-//call getMerkleProof from bns
+//call getMerkleProof from bnsClient
 _CHECK_RESULT
 bns_exit_code_t bns_get_merkle_proof(const bns_client_t*      bnsClient,
                                      const receipt_locator_t* receiptLocator,

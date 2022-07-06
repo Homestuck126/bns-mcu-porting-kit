@@ -14,6 +14,7 @@ static receipt_t* receiptPtr[RECEIPT_CACHE_SIZE] = {0};
 void receipt_cache_save(const receipt_t* receipt) {
   LOG_DEBUG("receipt_cache_save() begin");
   for (int i = 0; i < RECEIPT_CACHE_SIZE; i++) {
+    //store receipts 
     if (!receiptPtr[i]) {
       receipt_t* _receipt = (receipt_t*)malloc(sizeof(receipt_t));
       strcpy(_receipt->callerAddress, receipt->callerAddress);
@@ -73,11 +74,14 @@ void receipt_cache_findPageByClearanceOrderEqualOrLessThan(
   const size_t offset        = page * pageSize;
 
   int i;
+  //for all receipts in receipt cache
   for (i = 0; i < RECEIPT_CACHE_SIZE; i++) {
     if (size >= pageSize) { break; }
     if (!receiptPtr[i]) { break; }
+    //if this clearanceOrder is not the latest one
     if (receiptPtr[i]->clearanceOrder <= clearanceOrder) {
       if (currentOffset >= offset) {
+        //copy receipt into outputReceipt
         strcpy(outputReceipt[size].callerAddress, receiptPtr[i]->callerAddress);
 #if defined(RECEIPT_TIMESTAMP_IS_LONG)
         outputReceipt[size].timestamp = receiptPtr[i]->timestamp;
@@ -121,13 +125,16 @@ void receipt_cache_findPageByClearanceOrderEqualOrLessThan(
  */
 void receipt_cache_delete(const receipt_t* receipt) {
   LOG_DEBUG("receipt_cache_delete() begin");
+  //for all receipts 
   for (int i = 0; i < RECEIPT_CACHE_SIZE; i++) {
     if (!receiptPtr[i]) { continue; }
+    //if clearanceOrder is the same as current and indexValue is the same, deleate current,  
     if ((receiptPtr[i]->clearanceOrder == receipt->clearanceOrder) &&
         (strcmp(receiptPtr[i]->indexValue, receipt->indexValue) == 0)) {
       free(receiptPtr[i]);
       receiptPtr[i] = NULL;
       LOG_DEBUG("receipt_cache_delete() delete index=%d", i);
+      //shift all receipts 
       for (int j = i; j < (RECEIPT_CACHE_SIZE - 1); j++) {
         receiptPtr[j] = receiptPtr[j + 1];
         if (!receiptPtr[j + 1]) { break; }

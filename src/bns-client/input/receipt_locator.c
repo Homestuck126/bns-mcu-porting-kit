@@ -90,7 +90,7 @@ bns_get_receipt_locator_fail:
   }
   return exitCode;
 }
-//check responses in cJson then build receiptLocator
+//check responses in cJSON then build receiptLocator
 bns_exit_code_t check_and_parse_receipt_locator_response(
     const char* const        res,
     const char* const        indexValueKey,

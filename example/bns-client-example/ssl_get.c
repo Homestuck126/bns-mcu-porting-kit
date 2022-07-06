@@ -45,7 +45,7 @@ int ssl_init() {
   CURLcode res = curl_global_init(CURL_GLOBAL_ALL);
   // if res is not ok, fail
   if (res != CURLE_OK) { goto ssl_init_fail; }
-  //if null, error
+  //if curl did not inialize, return not ok
   if ((curl = curl_easy_init()) == NULL) { return !CURLE_OK; }
   //add APPLICATION_JSON to start of hs
   hs = curl_slist_append(hs, APPLICATION_JSON);
@@ -128,7 +128,7 @@ char* bns_get(const char* const url) {
     goto cleanupLabel;
   }
   if ((res = curl_easy_perform(curl)) != CURLE_OK) { goto cleanupLabel; }
-  //
+  
   LOG_INFO("bns_get() end, content-length=%zu bytes, content=%s", block.size,
            block.data);
   //return data in block
@@ -147,24 +147,30 @@ char* bns_post(const char* const url, const char* const postData) {
   MemoryBlock block = {.data = NULL, .size = 0};
 
   if ((res = ssl_reset()) != CURLE_OK) { goto cleanupLabel; }
+  //pass in pointer to URL 
   if ((res = curl_easy_setopt(curl, CURLOPT_URL, url)) != CURLE_OK) {
     goto cleanupLabel;
   }
+  //curl POST request
   if ((res = curl_easy_setopt(curl, CURLOPT_POST, 1L)) != CURLE_OK) {
     goto cleanupLabel;
   }
+  //size of POST data
   if ((res = curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE,
                               (long)strlen(postData))) != CURLE_OK) {
     goto cleanupLabel;
   }
+  //send POST with data
   if ((res = curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postData)) !=
       CURLE_OK) {
     goto cleanupLabel;
   }
+  //Pointer to pass to write callback
   if ((res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&block)) !=
       CURLE_OK) {
     goto cleanupLabel;
   }
+  //execute order
   if ((res = curl_easy_perform(curl)) != CURLE_OK) { goto cleanupLabel; }
 
   LOG_INFO("bns_post() end, content-length=%zu bytes, content=%s", block.size,

@@ -33,7 +33,7 @@
 #define DEFAULT_RETRY_DELAY_SEC 5
 
 #define VERIFY_BATCH_SIZE 1
-//check initalized arguments and they all exist 
+//initalize BNS
 _CHECK_RESULT
 bns_exit_code_t bns_client_init(bns_client_t*                bnsClient,
                                 const char*                  privateKey,
@@ -49,24 +49,24 @@ _CHECK_RESULT
 bns_exit_code_t bns_client_enable_binary_ledger_input(
     bns_client_t* bnsClient,
     char* (*post_multi)(const char*, const bns_form_t*, const bns_form_t*));
-
+//post binary ledger and check then save into receipt then insert callbacks
 _CHECK_RESULT
 bns_exit_code_t bns_client_ledger_input(const bns_client_t* bnsClient,
                                         const char*         cmdJson);
-
+//enable post_multi
 _CHECK_RESULT
 bns_exit_code_t bns_client_binary_ledger_input(const bns_client_t*  bnsClient,
                                                const char*          cmdJson,
                                                const binary_info_t* binaryInfo);
-
+//get ClearanceOrder and verify by done ClearanceOrder
 _CHECK_RESULT
 bns_exit_code_t bns_client_verify_now(const bns_client_t* bnsClient,
                                       size_t              verifyCount);
-
+//get done clearanceOrder from bns client server 
 _CHECK_RESULT
 bns_exit_code_t bns_get_done_clearance_order(const bns_client_t* bnsClient,
                                              clearance_order_t*  doneCO);
-
+//verify by done ClearanceOrder
 _CHECK_RESULT
 bns_exit_code_t bns_client_verify_by_done_co(const bns_client_t* bnsClient,
                                              size_t              verifyCount,

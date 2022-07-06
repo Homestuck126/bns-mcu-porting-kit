@@ -9,7 +9,7 @@
 //get url for post ledgerInputUrl
 void build_post_ledger_input_url(char** url, const char* const serverUrl) {
   if (!url) { return; }
-  //get size of serverUrl and "\input"
+  //get size of serverUrl and "/ledger/input"
   size_t size = strlen(serverUrl) + strlen(LEDGER_INPUT_PATH);
   //allocate size of server
   *url        = (char*)malloc(sizeof(char) * (size + 1));

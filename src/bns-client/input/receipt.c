@@ -340,17 +340,21 @@ bns_exit_code_t parse_receipt_from_cjson(cJSON* const     root,
 //cleanup
   cJSON_DetachItemViaPointer(root, temp);
   cJSON_Delete(temp);
-
+  //grab result from root
   temp = cJSON_GetObjectItem(root, "result");
+  //check is string
   if (!cJSON_IsString(temp)) {
     exitCode = BNS_RESPONSE_RESULT_PARSE_ERROR;
     goto parse_receipt_from_cJSON_fail;
   }
+  //get size of result
   size = strlen(temp->valuestring);
+  //check size is at least result length 
   if (size >= RESULT_LEN) {
     exitCode = BNS_RECEIPT_FILED_EXCEED_DEFINED_SIZE_ERROR;
     goto parse_receipt_from_cJSON_fail;
   }
+  //save receipt result
   strcpy(receipt->result, temp->valuestring);
   cJSON_DetachItemViaPointer(root, temp);
   cJSON_Delete(temp);
@@ -396,7 +400,6 @@ bns_exit_code_t parse_receipt_from_cjson(cJSON* const     root,
   }
   strcpy(receipt->sigClient.v, temp->valuestring);
   cJSON_DetachItemViaPointer(sig, temp);
-  //cleanup
   cJSON_Delete(temp);
   cJSON_DetachItemViaPointer(root, sig);
   cJSON_Delete(sig);

@@ -11,15 +11,14 @@ void bns_hex_to_byte(const char* hex, size_t size, unsigned char* byte) {
     byte[j] = 0;
     //if size is even
     if (i >= 0) {
-      //if hex[i] is a digit
+      //add to byte[j] hex[i] without the 0,  
       if (isdigit(hex[i])) {
-        //add to byte[j] hex[i] without the 0,  
         byte[j] += (hex[i] - '0') * 16;
       } else {
         byte[j] += (tolower(hex[i]) - 'a' + 10) * 16;
       }
     }
-    //always executes? 
+    //TODO:always executes? 
     if (i >= -1) {
       if (isdigit(hex[i + 1])) {
         byte[j] += (hex[i + 1] - '0');

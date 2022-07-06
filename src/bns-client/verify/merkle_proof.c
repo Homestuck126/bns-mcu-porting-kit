@@ -10,7 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 
-//get command string and url for getMerklePRoof
+//set url for getMerklePRoof
 void build_get_merkle_proof_url(
   char**                         url,
   const char* const              serverUrl,
@@ -25,7 +25,7 @@ void build_get_merkle_proof_url(
             receiptLocator->clearanceOrder, receiptLocator->indexValue);
   }
 }
-//call getMerkleProof from bns
+//call getMerkleProof from bnsClient
 bns_exit_code_t bns_get_merkle_proof(
     const bns_client_t* const      bnsClient,
     const receipt_locator_t* const receiptLocator,
@@ -34,6 +34,7 @@ bns_exit_code_t bns_get_merkle_proof(
   bns_exit_code_t exitCode;
   char*           url = NULL;
   char*           res = NULL;
+  //check existence
 bns_get_merkle_proof_beg:
   if (!bnsClient) {
     exitCode = BNS_CLIENT_NULL_ERROR;
@@ -57,14 +58,17 @@ bns_get_merkle_proof_beg:
   }
   LOG_INFO("bns_get_merkle_proof() begin, " RECEIPT_LOCATOR_PRINT_FORMAT,
            RECEIPT_LOCATOR_TO_PRINT_ARGS(receiptLocator));
+  //build url into url reference
   build_get_merkle_proof_url(&url, bnsClient->config.serverUrl, receiptLocator);
-
+  //call https get
   res = bnsClient->httpClient.get(url);
+  //free data
   BNS_FREE(url);
   if (!res) {
     exitCode = BNS_GET_MERKLE_PROOF_RESPONSE_NULL_ERROR;
     goto bns_get_merkle_proof_fail;
   }
+  //
   exitCode = check_and_parse_merkle_proof_response(res, merkleProof);
   if (exitCode != BNS_OK) { goto bns_get_merkle_proof_fail; }
   BNS_FREE(res);
@@ -160,7 +164,7 @@ bns_exit_code_t check_and_parse_merkle_proof_response(
     exitCode = BNS_MERKLE_PROOF_NULL_ERROR;
     goto check_and_parse_merkle_proof_response_fail;
   }
-  //changes res into a cJson parsable
+  //changes res into a cJSON parsable
   root          = cJSON_Parse(res);
   cJSON* status = cJSON_GetObjectItem(root, "status");
   //check if status exists, if not, error
@@ -282,7 +286,7 @@ void merkle_proof_print(const merkle_proof_t* const merkleProof) {
   LOG_BACKEND("merkleProof=merkle_proof_t(slice=%lld.%s",
               merkleProof->slice.index, merkleProof->slice.hashString);
   LOG_BACKEND(", pbPair=[");
-  //
+  //print out all the information in the pairs in the format of index,keyHash,value
   for (size_t i = 0; i < merkleProof->pbPair.size; i++) {
     if (i != 0) { LOG_BACKEND(", "); }
     LOG_BACKEND("pb_pair_t(index=%lld, keyHash=%s, value=%s)",
@@ -296,13 +300,13 @@ void merkle_proof_print(const merkle_proof_t* const merkleProof) {
               merkleProof->sigServer.s, merkleProof->sigServer.v);
   LOG_BACKEND(")\n");
 }
-//Get toSignData from merkleProof which is just pbPair and clearanceOrder
+//Get toSignData from merkleProof which is values in pb pair and clearanceOrder
 bns_exit_code_t merkle_proof_to_sign_data(
     const merkle_proof_t* const merkleProof, char** const toSignData) {
   LOG_DEBUG("merkle_proof_to_sign_data() begin");
   bns_exit_code_t exitCode    = BNS_OK;
   char*           sliceString = NULL;
-  //
+  //check existence 
   if (!merkleProof) {
     exitCode = BNS_MERKLE_PROOF_NULL_ERROR;
     goto merkle_proof_to_sign_data_fail;
@@ -333,16 +337,17 @@ bns_exit_code_t merkle_proof_to_sign_data(
   }
   //cpy sliceString to toSignData
   strcpy(*toSignData, sliceString);
-  //
+  //put pbPairValues after toSignData
   for (size_t i = 0; i < merkleProof->pbPair.size; i++) {
     sprintf((*toSignData) + strlen(*toSignData), "%lld%s%s",
             merkleProof->pbPair.pbPairValue[i].index,
             merkleProof->pbPair.pbPairValue[i].keyHash,
             merkleProof->pbPair.pbPairValue[i].value);
   }
-  // formats it to have clearanceOrder
+  //format to Sign data to have clearanceOrder
   sprintf((*toSignData) + strlen(*toSignData), "%lld",
           merkleProof->clearanceOrder);
+  //cleanup
   BNS_FREE(sliceString);
   LOG_DEBUG("merkle_proof_to_sign_data() end");
   return exitCode;

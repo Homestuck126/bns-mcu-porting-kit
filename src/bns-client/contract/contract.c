@@ -196,7 +196,7 @@ bns_exit_code_t check_and_parse_contract_clearance_record_response(
   bns_exit_code_t exitCode = BNS_OK;
   cJSON*          root     = NULL;
   cJSON*          item;
-  //check existence of clearanceREcord
+  //check existence of clearanceRecord
   if (!clearanceRecord) {
     exitCode = BNS_CLEARANCE_RECORD_NULL_ERROR;
     goto check_contract_clearance_record_response_fail;

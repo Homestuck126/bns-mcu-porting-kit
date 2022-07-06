@@ -16,7 +16,7 @@ void get_clearance_record_cache(const clearance_order_t   clearanceOrder,
     //if clearanceCache locations clearanceOrder is the same is the given clearance Order, 
     if (clearanceRecordCache[i].clearanceRecord.clearanceOrder ==
         clearanceOrder) {
-          //copies the clearencerecord of the corresponding clearance order into record 
+          //copies the clearencerecord of the corresponding clearance order into clearanceRecord from cache
       memcpy(clearanceRecord, &clearanceRecordCache[i].clearanceRecord,
              sizeof(clearance_record_t));
              // removes timestamp of the cache
@@ -24,7 +24,7 @@ void get_clearance_record_cache(const clearance_order_t   clearanceOrder,
     }
   }
 }
-
+// insert clearance or replace earliest clearance
 void set_clearance_record_cache(
     const clearance_record_t* const clearanceRecord) {
       // if clearanceRecord does not exists

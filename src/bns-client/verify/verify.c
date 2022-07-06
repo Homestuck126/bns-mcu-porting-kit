@@ -16,6 +16,7 @@ bns_exit_code_t verify(const bns_client_t* const      bnsClient,
                        verify_receipt_result_t* const verifyReceiptResult) {
   bns_exit_code_t   exitCode;
   receipt_locator_t receiptLocator = {0};
+  //check existence 
   if (!bnsClient) {
     exitCode = BNS_CLIENT_NULL_ERROR;
     goto verify_fail;
@@ -32,6 +33,7 @@ bns_exit_code_t verify(const bns_client_t* const      bnsClient,
     exitCode = BNS_VERIFY_RECEIPT_RESULT_NULL_ERROR;
     goto verify_fail;
   }
+  //save clearanceOrder in verifyReceipt result
   LOG_INFO("verify() begin, " RECEIPT_PRINT_FORMAT,
            RECEIPT_TO_PRINT_ARGS(receipt));
   verifyReceiptResult->clearanceOrder = receipt->clearanceOrder;
@@ -48,7 +50,7 @@ bns_exit_code_t verify(const bns_client_t* const      bnsClient,
   verifyReceiptResult->pbPairOk                  = false;
   verifyReceiptResult->sliceOk                   = false;
   verifyReceiptResult->clearanceRecordRootHashOk = false;
-
+  //save clearanceOrder in receipt locator
   receiptLocator.clearanceOrder = receipt->clearanceOrder;
   bns_strdup(&receiptLocator.indexValue, receipt->indexValue);
   exitCode = bns_get_merkle_proof(bnsClient, &receiptLocator, merkleProof);
@@ -90,6 +92,7 @@ bns_exit_code_t verify(const bns_client_t* const      bnsClient,
   exitCode = verify_root_hash(merkleProof, &clearanceRecord,
                               &verifyReceiptResult->clearanceRecordRootHashOk);
   if (exitCode != BNS_OK) { goto verify_fail; }
+  //set pass to true
   verifyReceiptResult->pass = true;
   //insert ok status
   bns_strdup(&verifyReceiptResult->status, BNS_STATUS_OK);
@@ -115,7 +118,7 @@ bns_exit_code_t verify_merkle_proof_signature(
     bool* const                 result) {
   bns_exit_code_t exitCode;
   char*           toSignData = NULL;
-  //check everything exists 
+  //check existence
   if (!serverWalletAddress) {
     exitCode = BNS_SERVER_WALLET_ADDRESS_NULL_ERROR;
     goto verify_merkle_proof_signature_fail;

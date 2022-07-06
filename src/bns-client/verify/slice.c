@@ -43,6 +43,7 @@ bns_exit_code_t parse_slice(const char* const sliceString,
   LOG_DEBUG("parse_slice() begin, sliceString=%s", sliceString);
   bns_exit_code_t exitCode        = BNS_OK;
   char*           hashStringBegin = NULL;
+  //check existence
   if (!sliceString) {
     exitCode = BNS_SLICE_STRING_NULL_ERROR;
     goto parse_slice_fail;

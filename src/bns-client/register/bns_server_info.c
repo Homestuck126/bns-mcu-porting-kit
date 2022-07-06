@@ -50,10 +50,10 @@ bns_get_server_info_beg:
     goto bns_get_server_info_fail;
   }
   BNS_FREE(url);
-  //
+  //save bns server info and check that there are no errors
   exitCode = check_and_parse_bns_server_info_response(res, bnsServerInfo);
   if (exitCode != BNS_OK) { goto bns_get_server_info_fail; }
-
+  //cleanup
   BNS_FREE(res);
 
   LOG_INFO("bns_get_server_info() end, " BNS_SERVER_INFO_PRINT_FORMAT,
