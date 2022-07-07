@@ -49,7 +49,7 @@ bns_exit_code_t check_init_args(const bns_client_t* const  bnsClient,
   }
   return BNS_OK;
 }
-//
+//initalize BNS
 bns_exit_code_t bns_client_init(bns_client_t* const        bnsClient,
                                 const char* const          privateKey,
                                 const char* const          indexValueKey,
@@ -161,7 +161,7 @@ bns_exit_code_t bns_client_enable_binary_ledger_input(
   bnsClient->httpClient.post_multi = post_multi;
   return BNS_OK;
 }
-//bns client callbacks and 
+//post binary ledger and check then save into receipt then insert callbacks
 bns_exit_code_t bns_client_ledger_input(const bns_client_t* const bnsClient,
                                         const char* const         cmdJson) {
   LOG_INFO("bns_client_ledger_input() begin, cmdJson=%s", cmdJson);
@@ -352,7 +352,7 @@ bns_relogin_fail:
             bns_strerror(exitCode));
   return exitCode;
 }
-
+//get ClearanceOrder and verify by done ClearanceOrder
 bns_exit_code_t bns_client_verify_now(const bns_client_t* const bnsClient,
                                       const size_t              verifyCount) {
   LOG_INFO("bns_client_verify_now() begin");
@@ -381,7 +381,7 @@ bns_client_verify_now_fail:
             bns_strerror(exitCode));
   return exitCode;
 }
-
+//verify by done ClearanceOrder
 bns_exit_code_t bns_client_verify_by_done_co(
     const bns_client_t* const bnsClient,
     const size_t              verifyCount,
@@ -396,7 +396,6 @@ bns_exit_code_t bns_client_verify_by_done_co(
   }
   size_t toVerifyCount = verifyCount;
   size_t receiptCount  = 0;
-  //
   do {
     //count is equal to less than toVerifyCount 
     size_t count =
@@ -413,7 +412,6 @@ bns_exit_code_t bns_client_verify_by_done_co(
       //verify data
       exitCode =
           verify(bnsClient, &receipt[i], &merkleProof, &verifyReceiptResult);
-          //
       if (bnsClient->callback.get_verify_receipt_result) {
         bnsClient->callback.get_verify_receipt_result
         (&receipt[i], &merkleProof, &verifyReceiptResult);

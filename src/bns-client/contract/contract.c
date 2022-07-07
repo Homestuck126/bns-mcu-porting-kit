@@ -82,7 +82,7 @@ bns_exit_code_t build_contract_request_json(const char* const contractAddress,
   cJSON_AddStringToObject(root, "method", "eth_call");
   cJSON_AddItemToObject(root, "params", params);
   cJSON_AddNumberToObject(root, "id", 1, 1);
-// if requestJson still exists, free it
+  // if requestJson still exists, free it
   if (*requestJson) { BNS_FREE(*requestJson); }
   //convert root to text in requestJson
   *requestJson = cJSON_PrintUnformatted(root);
@@ -172,7 +172,7 @@ contract_post_clearance_record_beg:
       "contract_post_clearance_record() end, " CLEARANCE_RECORD_PRINT_FORMAT,
       CLEARANCE_RECORD_TO_PRINT_ARGS(clearanceRecord));
   return exitCode;
-
+//cleanup and retry
 contract_post_clearance_record_fail:
   if (coInstruction) { BNS_FREE(coInstruction); }
   if (requestMessage) { BNS_FREE(requestMessage); }

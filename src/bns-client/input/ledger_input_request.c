@@ -99,7 +99,7 @@ bns_exit_code_t build_ledger_input_request(
 #else
   ledgerInputRequest->timestamp = get_timestamp_string();
 #endif
-// duplicate right to left 
+  //duplicate right to left 
   bns_strdup(&ledgerInputRequest->cmd, cmdJson);
   bns_strdup(&ledgerInputRequest->indexValue, receiptLocator->indexValue);
   bns_strdup(&ledgerInputRequest->metadata, "");

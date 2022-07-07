@@ -71,18 +71,23 @@ int ssl_reset() {
     return res;
   }
 #endif
+  //pointer of linked List of HTTP headers to pass to server in HTTP request
   if ((res = curl_easy_setopt(curl, CURLOPT_HTTPHEADER, hs)) != CURLE_OK) {
     return res;
   }
+  //time allowed for libcurl transfer
   if ((res = curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L)) != CURLE_OK) {
     return res;
   }
+  //CURL does not verify authenticy of peer's certificate
   if ((res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L)) != CURLE_OK) {
     return res;
   }
+  //does not care about name in certificate
   if ((res = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L)) != CURLE_OK) {
     return res;
   }
+  //disable sessionID caching 
   if ((res = curl_easy_setopt(curl, CURLOPT_SSL_SESSIONID_CACHE, 0L)) !=
       CURLE_OK) {
     return res;
@@ -120,9 +125,11 @@ char* bns_get(const char* const url) {
   MemoryBlock block = {.data = NULL, .size = 0};
   //if error, cleanup
   if ((res = ssl_reset()) != CURLE_OK) { goto cleanupLabel; }
+  //pointer to the URL for Curl
   if ((res = curl_easy_setopt(curl, CURLOPT_URL, url)) != CURLE_OK) {
     goto cleanupLabel;
   }
+  //points to the block to store data in 
   if ((res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&block)) !=
       CURLE_OK) {
     goto cleanupLabel;

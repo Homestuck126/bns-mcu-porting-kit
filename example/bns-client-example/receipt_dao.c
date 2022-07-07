@@ -13,6 +13,7 @@ static receipt_t* receiptPtr[RECEIPT_CACHE_SIZE] = {0};
  */
 void receipt_cache_save(const receipt_t* receipt) {
   LOG_DEBUG("receipt_cache_save() begin");
+  // for i less than the max size
   for (int i = 0; i < RECEIPT_CACHE_SIZE; i++) {
     //store receipts 
     if (!receiptPtr[i]) {
@@ -69,6 +70,7 @@ void receipt_cache_findPageByClearanceOrderEqualOrLessThan(
         "outputSize=NULL");
     return;
   }
+  //calculate offset
   size_t       size          = 0;
   size_t       currentOffset = 0;
   const size_t offset        = page * pageSize;
@@ -80,6 +82,7 @@ void receipt_cache_findPageByClearanceOrderEqualOrLessThan(
     if (!receiptPtr[i]) { break; }
     //if this clearanceOrder is not the latest one
     if (receiptPtr[i]->clearanceOrder <= clearanceOrder) {
+      //if currentOffset is not greater
       if (currentOffset >= offset) {
         //copy receipt into outputReceipt
         strcpy(outputReceipt[size].callerAddress, receiptPtr[i]->callerAddress);
@@ -101,6 +104,7 @@ void receipt_cache_findPageByClearanceOrderEqualOrLessThan(
         strcpy(outputReceipt[size].sigClient.r, receiptPtr[i]->sigClient.r);
         strcpy(outputReceipt[size].sigClient.s, receiptPtr[i]->sigClient.s);
         strcpy(outputReceipt[size].sigClient.v, receiptPtr[i]->sigClient.v);
+
         strcpy(outputReceipt[size].sigServer.r, receiptPtr[i]->sigServer.r);
         strcpy(outputReceipt[size].sigServer.s, receiptPtr[i]->sigServer.s);
         strcpy(outputReceipt[size].sigServer.v, receiptPtr[i]->sigServer.v);
@@ -131,10 +135,11 @@ void receipt_cache_delete(const receipt_t* receipt) {
     //if clearanceOrder is the same as current and indexValue is the same, deleate current,  
     if ((receiptPtr[i]->clearanceOrder == receipt->clearanceOrder) &&
         (strcmp(receiptPtr[i]->indexValue, receipt->indexValue) == 0)) {
+      // deallocated and delete recept ptr
       free(receiptPtr[i]);
       receiptPtr[i] = NULL;
       LOG_DEBUG("receipt_cache_delete() delete index=%d", i);
-      //shift all receipts 
+      // shift everything to the left 1
       for (int j = i; j < (RECEIPT_CACHE_SIZE - 1); j++) {
         receiptPtr[j] = receiptPtr[j + 1];
         if (!receiptPtr[j + 1]) { break; }

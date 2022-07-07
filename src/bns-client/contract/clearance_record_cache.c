@@ -31,7 +31,7 @@ void set_clearance_record_cache(
   if (!clearanceRecord) { return; }
       //if clearance order has nothing, return
   if (clearanceRecord->clearanceOrder == 0) { return; }
-//find an open space for the new clearanceRecord in cache and set it
+  //find an open space for the new clearanceRecord in cache and set it
   bool placed = false;
   for (size_t i = 0; i < CLEARANCE_RECORD_CACHE_SIZE; i++) {
     //if the clearanceorder at location is empty, 

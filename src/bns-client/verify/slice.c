@@ -59,7 +59,7 @@ bns_exit_code_t parse_slice(const char* const sliceString,
   //copies hashStringBegin into hashstring
   bns_strdup(&slice->hashString, hashStringBegin);
   slice->hashStringList = (char**)malloc(sizeof(char*) * slice->size);
-  // copy all of the hash strings + i * length into Hash StringList of slice
+  //copy all of the hash strings + i * length into Hash StringList of slice
   for (size_t i = 0; i < slice->size; i++) {
     slice->hashStringList[i] = slice->hashString + i * HASH_STR_LEN;
   }

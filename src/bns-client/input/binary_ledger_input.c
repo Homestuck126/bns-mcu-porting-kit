@@ -160,7 +160,7 @@ bns_exit_code_t check_and_parse_binary_ledger_input_response(
   //reallocate space
   binaryLedgerInputResult->status =
       (char*)malloc(sizeof(char) * (strlen(status->valuestring) + 1));
-      //copy status into valueString
+  //copy status into valueString
   strcpy(binaryLedgerInputResult->status, status->valuestring);
   //deatch status from root
   cJSON_DetachItemViaPointer(root, status);
@@ -235,7 +235,7 @@ bns_exit_code_t check_and_parse_binary_ledger_input_response(
   //detach pointer
   cJSON_DetachItemViaPointer(root, doneClearanceOrderList);
   cJSON_Delete(doneClearanceOrderList);
-  //get BinaryFileUrl and check it
+  //get BinaryFileUrl and metaData and check it
   binaryFileMetadata = cJSON_GetObjectItem(root, "binaryFileMetadata");
   binaryFileUrl = cJSON_GetObjectItem(binaryFileMetadata, "BINARY_FILE_URL");
   //if binaryFileUrl is string returns false, error

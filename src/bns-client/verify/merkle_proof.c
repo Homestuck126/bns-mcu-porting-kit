@@ -68,7 +68,7 @@ bns_get_merkle_proof_beg:
     exitCode = BNS_GET_MERKLE_PROOF_RESPONSE_NULL_ERROR;
     goto bns_get_merkle_proof_fail;
   }
-  //
+  //build merkleProof from res
   exitCode = check_and_parse_merkle_proof_response(res, merkleProof);
   if (exitCode != BNS_OK) { goto bns_get_merkle_proof_fail; }
   BNS_FREE(res);
@@ -105,11 +105,11 @@ bns_exit_code_t parse_pb_pair(cJSON* const root, pb_pair_t* const pbPair) {
   //copies all the information from cJson Root into pbPairValue
   for (size_t i = 0; i < pbPair->size; i++) {
     cJSON* pbpContent;
-    // grab cJson array item
+    //grab cJson array item
     pbpContent = cJSON_GetArrayItem(root, (int)i);
-    // grab what is in index at that location
+    //grab what is in index at that location
     temp       = cJSON_GetObjectItem(pbpContent, "index");
-    //if temp is not string, fail
+    //if index is not number, fail
     if (!cJSON_IsNumber(temp)) {
       exitCode = BNS_RESPONSE_PBPAIR_PARSE_ERROR;
       goto parse_pb_pair_fail;
@@ -122,7 +122,7 @@ bns_exit_code_t parse_pb_pair(cJSON* const root, pb_pair_t* const pbPair) {
     cJSON_Delete(temp);
     //set temp as phpContents keyHash
     temp = cJSON_GetObjectItem(pbpContent, "keyHash");
-    //if temp is not string, fail
+    //if keyHash does not exists, fail 
     if (!temp) {
       exitCode = BNS_RESPONSE_PBPAIR_PARSE_ERROR;
       goto parse_pb_pair_fail;
@@ -153,7 +153,7 @@ parse_pb_pair_fail:
             bns_strerror(exitCode));
   return exitCode;
 }
-//forms json object for merkleProof
+//forms merkleProof and parses res
 bns_exit_code_t check_and_parse_merkle_proof_response(
     const char* const res, merkle_proof_t* const merkleProof) {
   LOG_DEBUG("check_and_parse_merkle_proof_response() begin");

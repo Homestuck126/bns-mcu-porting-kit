@@ -74,7 +74,7 @@ bns_exit_code_t bns_sign(const unsigned char* sha3Result,
   secp256k1_ecdsa_recoverable_signature_serialize_compact(context, sigByte, &v,
                                                           &signature);
   v += 27;
-
+  //turn sigByte to sig which is a hex 
   bns_byte_to_hex(sigByte, BYTES_32, sig->r);
   bns_byte_to_hex(sigByte + BYTES_32, BYTES_32, sig->s);
   sprintf(sig->v, "%02x", v);
@@ -178,7 +178,7 @@ bns_exit_code_t verify_signature(const char* const  address,
       exitCode = BNS_VERIFY_SIGNATURE_ERROR;
     }
   }
-  // if error, 
+  //if error, 
   if (exitCode == BNS_VERIFY_SIGNATURE_ERROR) {
     char publicKey[PUBLIC_KEY_STR_LEN]   = {0};
     char recoverAddress[ADDRESS_STR_LEN] = {0};

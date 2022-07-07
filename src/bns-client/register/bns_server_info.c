@@ -61,6 +61,7 @@ bns_get_server_info_beg:
   return exitCode;
 
 bns_get_server_info_fail:
+//clean up and retry
   if (url) { BNS_FREE(url); }
   if (res) { BNS_FREE(res); }
   LOG_ERROR("bns_get_server_info() error, " BNS_EXIT_CODE_PRINT_FORMAT,
@@ -81,7 +82,7 @@ bns_exit_code_t check_and_parse_bns_server_info_response(
   bns_exit_code_t exitCode = BNS_OK;
   cJSON*          root     = NULL;
   cJSON*          temp     = NULL;
-  //check server info
+  //check existence
   if (!bnsServerInfo) {
     exitCode = BNS_SERVER_INFO_NULL_ERROR;
     goto check_bns_server_info_response_fail;
