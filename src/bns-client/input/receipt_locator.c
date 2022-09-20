@@ -68,7 +68,6 @@ bns_get_receipt_locator_beg:
            res, bnsClient->config.indexValueKey, receiptLocator)) != BNS_OK) {
     goto bns_get_receipt_locator_fail;
   }
-
   BNS_FREE(res);
 
   LOG_DEBUG("bns_get_receipt_locator() end, " RECEIPT_LOCATOR_PRINT_FORMAT,
@@ -188,6 +187,7 @@ bns_exit_code_t build_receipt_locator(const char* const        indexValueKey,
   receiptLocator->indexValue     = (char*)malloc(sizeof(char) * (size + 1));
   //combine indexValue as indexValue and sn
   sprintf(receiptLocator->indexValue, "%s_R%lld", indexValueKey, sn);
+  
   LOG_DEBUG("build_receipt_locator() end" RECEIPT_LOCATOR_PRINT_FORMAT,
             RECEIPT_LOCATOR_TO_PRINT_ARGS(receiptLocator));
   return exitCode;

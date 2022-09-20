@@ -475,6 +475,7 @@ bns_get_done_clearance_order_beg:
 
   LOG_INFO("bns_get_done_clearance_order() end, doneCO=%lld", *doneCO);
   return exitCode;
+
 bns_get_done_clearance_order_fail:
   if (url) { BNS_FREE(url); }
 

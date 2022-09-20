@@ -45,3 +45,14 @@ void remove_end_slash(char* string) {
   size_t len = strlen(string);
   if (string[len - 1] == '/') { string[len - 1] = '\0'; }
 }
+
+char* bns_to_lower_case_index_value(char* a , char buffer []) {
+  size_t size= strlen(a);
+  for (size_t i = 0; i < size-2; i++) {
+    buffer[i] =  (tolower(a[i]));
+  }
+  buffer[size-2] = a[size-2];
+  buffer[size-1] = a[size-1];
+  buffer[size] = a[size];
+  return buffer;
+}
