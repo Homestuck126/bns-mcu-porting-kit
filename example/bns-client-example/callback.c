@@ -1,5 +1,5 @@
 #include "callback.h"
-
+#include "config.h"
 #include <bns-client/input/ledger_input.h>
 #include <bns-client/input/receipt_locator.h>
 #include <bns-client/util/log.h>
@@ -118,76 +118,75 @@ void verify_receipt_result_callback(
   _UNUSED const merkle_proof_t *merkleProof,
   const verify_receipt_result_t *verifyReceiptResult) {
    
-    LOG_DEBUG("get_verify_receipt_result() begin");
+    LOG_DEBUG("\nget_verify_receipt_result() begin\n");
     size_t retryCount = 5;
 
     //send_verify_receipt_result_to_dashboard(verifyReceiptResult, &retryCount);
-    LOG_DEBUG("get_verify_receipt_result() end");
+    LOG_DEBUG("\nget_verify_receipt_result() end\n");
   }
 
 void build_get_tx_count_url(char** url) {
   if (!url) { return; }
-  char* serverUrl = "https://bns.itrustmachines.com";
-  char* txCount = "/tx/overview";
+  char* serverUrl = SERVER_URL;
+  char* txCount = "tx/overview";
   size_t size = strlen(serverUrl) + strlen(txCount);
   *url        = (char*)malloc(sizeof(char) * (size + 1));
   if (*url) { sprintf(*url, "%s%s", serverUrl, txCount); }
 }
 void get_tx_count(http_client_t client )
 {
+  LOG_DEBUG("\nBNS Get TXCOUNT begin\n");
   char ** url;
   build_get_tx_count_url(&url);
   char * res = client.get(url);
-  printf("\n\n\n\n\n\n\n\n\n\n");
-  printf(res);
+  LOG_DEBUG("\nBNS Get TXCOUNT end\n");
 }
 
 void build_get_server_info_url(char** url) {
   if (!url) { return; }
-  char* serverUrl = "https://bns.itrustmachines.com";
-  char* txCount = "/serverInfo";
+  char* serverUrl = SERVER_URL;
+  char* txCount = "serverInfo";
   size_t size = strlen(serverUrl) + strlen(txCount);
   *url        = (char*)malloc(sizeof(char) * (size + 1));
   if (*url) { sprintf(*url, "%s%s", serverUrl, txCount); }
 }
 void get_server_info(http_client_t client )
 {
+  LOG_DEBUG("\nBNS Get serverinfo begin\n");
   char ** url;
   build_get_server_info_url(&url);
   char * res = client.get(url);
-  printf("\n\n\n\n\n\n\n\n\n\n");
-  printf(res);
+  LOG_DEBUG("\nBNS Get serverinfo end\n");
 }
+
 void build_download_merkleProof_url(clearance_order_t Clear, char* indexValue, char** url)
 {
     if (!url) { return; }
-  char* serverUrl = "https://bns.itrustmachines.com";
-  char* temp  = "/verify/merkleProof";
+  char* serverUrl = SERVER_URL;
+  char* temp  = "verify/merkleProof";
   char** merkleurl;
-  printf(indexValue);
-  size_t size = bns_digits(Clear) + strlen(indexValue) + 4 + strlen(temp); 
+  size_t size = bns_digits(72) + strlen(indexValue) + 4 + strlen(temp); 
   merkleurl        = (char*)malloc(sizeof(char) * (size + 1));
-  sprintf(merkleurl, "%s/%lld/%s" , temp , Clear,indexValue );
+  sprintf(merkleurl, "%s/%lld/%s" , temp , 72,indexValue );
   size = strlen(serverUrl) + strlen(merkleurl);
   *url        = (char*)malloc(sizeof(char) * (size + 1));
   if (*url) {sprintf(*url, "%s%s", serverUrl, merkleurl); }
   merkleurl = NULL;
-  printf(*url);
 }
 void download_merkleProof(clearance_order_t clearanceOrder, char* indexValue, http_client_t client)
 {
-    //char cmdJson[CMD_LEN] = {0};
-  //sprintf(cmdJson, "{\"clearanceOrder\":\"%d\", \"indexValue\":%s}", clearanceOrder, indexValue );
+  LOG_DEBUG("\nBNS getMerkleProof begin\n");
   char ** url;
   build_download_merkleProof_url(clearanceOrder , indexValue, &url);
   char * res = client.get(url);
-  printf(res);
-  }
+  LOG_DEBUG("\nBNS getMerkleProof end\n");
+}
+
 void build_Confirm_Wallet_Address_url(char * address ,char** url)
 {
     if (!url) { return; }
-  char* serverUrl = "https://bns.itrustmachines.com";
-  char* temp  = "/account/register/check/";
+  char* serverUrl = SERVER_URL;
+  char* temp  = "account/register/check/";
   char** confirmurl;
   size_t size = bns_digits(address) +2  + strlen(temp); 
   confirmurl        = (char*)malloc(sizeof(char) * (size + 1));
@@ -200,37 +199,36 @@ void build_Confirm_Wallet_Address_url(char * address ,char** url)
 }
 void confirm_Wallet_Address(http_client_t client , char* address)
 {
-    //char cmdJson[CMD_LEN] = {0};
-  //sprintf(cmdJson, "{\"clearanceOrder\":\"%d\", \"indexValue\":%s}", clearanceOrder, indexValue );
   char ** url;
   build_Confirm_Wallet_Address_url(address,&url);
   char * res = client.get(url);
-  printf(res);
-  }
-  void build_get_done_Clearance_Order_url(char** url) {
+}
+
+  void build_get_done_Clearance_Order_url(char** url) 
+  {
   if (!url) { return; }
-  char* serverUrl = "https://bns.itrustmachines.com";
-  char* txCount = "/doneClearanceOrder";
+  char* serverUrl = SERVER_URL;
+  char* txCount = "doneClearanceOrder";
   size_t size = strlen(serverUrl) + strlen(txCount);
   *url        = (char*)malloc(sizeof(char) * (size + 1));
   if (*url) { sprintf(*url, "%s%s", serverUrl, txCount); }
+  printf(*url);
 }
 void get_done_Clearance_Order(http_client_t client )
 {
+  LOG_DEBUG("\nBNS getDoneClearanceOrder begin\n");
   char ** url;
   build_get_done_Clearance_Order_url(&url);
   char * res = client.get(url);
-  printf("\n\n\n\n\n\n\n\n\n\n");
-  printf(res);
+  LOG_DEBUG("\nBNS getDoneClearanceOrder end\n");
 }
 
 void build_download_Verification_Proof_url(clearance_order_t Clear, char* indexValue, char** url)
 {
     if (!url) { return; }
-  char* serverUrl = "https://bns.itrustmachines.com";
-  char* temp  = "/verify/verificationProof";
+  char* serverUrl = SERVER_URL;
+  char* temp  = "verify/verificationProof";
   char** merkleurl;
-  printf(indexValue);
   size_t size = bns_digits(Clear) + strlen(indexValue) + 4 + strlen(temp); 
   merkleurl        = (char*)malloc(sizeof(char) * (size + 1));
   sprintf(merkleurl, "%s/%lld/%s" , temp , Clear,indexValue );
@@ -238,52 +236,22 @@ void build_download_Verification_Proof_url(clearance_order_t Clear, char* indexV
   *url        = (char*)malloc(sizeof(char) * (size + 1));
   if (*url) {sprintf(*url, "%s%s", serverUrl, merkleurl); }
   merkleurl = NULL;
-  printf(*url);
 }
 void download_Verification_Proof(clearance_order_t clearanceOrder, char* indexValue, http_client_t client)
 {
   char cmdJson[CMD_LEN] = {0};
   sprintf(cmdJson, "{\"clearanceOrder\":\"%d\", \"indexValue\":%s}", clearanceOrder, indexValue );
   char ** url;
-  build_download_merkleProof_url(clearanceOrder , indexValue, &url);
+  build_download_Verification_Proof_url(clearanceOrder , indexValue, &url);
   char * res = client.get(url);
-  printf(res);
-  }
-
-void build_verify_Verification_Proof_url(clearance_order_t Clear, char* indexValue, char** url)
-{
-    if (!url) { return; }
-  char* serverUrl = "https://bns.itrustmachines.com";
-  char* temp  = "/verify/verificationProof";
-  char** merkleurl;
-  printf(indexValue);
-  size_t size = bns_digits(Clear) + strlen(indexValue) + 4 + strlen(temp); 
-  merkleurl        = (char*)malloc(sizeof(char) * (size + 1));
-  sprintf(merkleurl, "%s/%lld/%s" , temp , Clear,indexValue );
-  size = strlen(serverUrl) + strlen(merkleurl);
-  *url        = (char*)malloc(sizeof(char) * (size + 1));
-  if (*url) {sprintf(*url, "%s%s", serverUrl, merkleurl); }
-  merkleurl = NULL;
-  printf(*url);
-}
-void Verify_Verification_Proof( http_client_t client)
-{
-  char cmdJson[CMD_LEN] = {0};
-  FILE *file;
-  char datatobeRead[10000];
-  if(fopen("0xf11f103cf88be3010fcec835f5a973a0d847fc35_R14_329.itm", "r"))
-{
-  int count =0;
-  while(!feof(file));
+  FILE* fptr = fopen("practice.txt" , "w");
+  if(fptr == NULL)
   {
-    char temp = fgetc(file);
-    datatobeRead[count] = temp;
-    count++;
-    printf(temp);
+    LOG_INFO("ERROR");
+    return;
   }
-  printf("\n\n\n");
-  printf(datatobeRead);
+  fprintf(fptr ,"%s", res);
+  fclose(fptr);
 }
-else
-printf("ERROR");
-  }
+
+  

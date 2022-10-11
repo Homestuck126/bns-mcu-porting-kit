@@ -236,3 +236,102 @@ cleanupLabel:
   LOG_ERROR("eth_post() error, %s", curl_easy_strerror(res));
   return block.data;
 }
+char* CURLVERIFY()
+{
+CURLcode res = 0;
+MemoryBlock block = {.data = NULL, .size = 0};
+if(curl) {
+   
+  if ((res = ssl_reset()) != CURLE_OK) { 
+    LOG_INFO("reset problem");
+    goto cleanupLabel; }
+
+  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+  curl_easy_setopt(curl, CURLOPT_URL, "https://verification.itrustmachines.com/verifyProof");
+  curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+  curl_easy_setopt(curl, CURLOPT_DEFAULT_PROTOCOL, "https");
+  struct curl_slist *headers = NULL;
+  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+  curl_mime *mime;
+  curl_mimepart *part;
+  mime = curl_mime_init(curl);
+  part = curl_mime_addpart(mime);
+  curl_mime_name(part, "verification-proof");
+  curl_mime_filedata(part, "../example/bns-client-example/cross.jpg_72_0.itm");
+    if ((res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&block)) !=
+      CURLE_OK) {
+    goto cleanupLabel;
+  }
+  //execute order
+  if ((res = curl_easy_perform(curl)) != CURLE_OK) { goto cleanupLabel; }
+  curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
+  if ((res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&block)) !=
+      CURLE_OK) {
+        LOG_INFO("response problem");
+      goto cleanupLabel;
+  }
+  res = curl_easy_perform(curl);
+  curl_mime_free(mime);
+}
+
+  LOG_INFO("Verify() end, content-length=%zu bytes, content=%s", block.size,
+           block.data);
+  LOG_INFO("I AM ERROR");
+  free(block.data);
+return;
+
+cleanupLabel:
+  if (block.data) { free(block.data); }
+  LOG_ERROR("eth_post() error, %s", curl_easy_strerror(res));
+  return block.data;
+}
+
+
+char* CURLVERIFYWithoutFile()
+{
+CURLcode res = 0;
+MemoryBlock block = {.data = NULL, .size = 0};
+LOG_INFO("Here we go again ");
+if(curl) {
+   
+  if ((res = ssl_reset()) != CURLE_OK) { 
+    LOG_INFO("reset problem");
+    goto cleanupLabel; }
+  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "POST");
+  curl_easy_setopt(curl, CURLOPT_URL, "https://verification.itrustmachines.com/verifyProofAndRawDataWithoutFile");
+  curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+  curl_easy_setopt(curl, CURLOPT_DEFAULT_PROTOCOL, "https");
+  struct curl_slist *headers = NULL;
+  curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+  curl_mime *mime;
+  curl_mimepart *part;
+  mime = curl_mime_init(curl);
+  part = curl_mime_addpart(mime);
+  curl_mime_name(part, "verify-file-name");
+  curl_mime_data(part, "cross.jpg", CURL_ZERO_TERMINATED);
+  part = curl_mime_addpart(mime);
+  curl_mime_name(part, "verify-file-hash");
+  curl_mime_data(part, "17e0a5f86d0daf3ada4d03a6ffe9abcc26ead557c1407c942874429a3323c8c6", CURL_ZERO_TERMINATED);
+  part = curl_mime_addpart(mime);
+  curl_mime_name(part, "verification-proof");
+  curl_mime_filedata(part, "cross.jpg_72_0.itm");
+  curl_easy_setopt(curl, CURLOPT_MIMEPOST, mime);
+  res = curl_easy_perform(curl);
+  curl_mime_free(mime);
+  if ((res = curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&block)) !=
+      CURLE_OK) {
+      goto cleanupLabel;
+  }
+  res = curl_easy_perform(curl);
+  curl_mime_free(mime);
+}
+  LOG_INFO("Verify() end, content-length=%zu bytes, content=%s", block.size,
+           block.data);
+return block.data;
+
+cleanupLabel:
+  if (block.data) { free(block.data); }
+  LOG_ERROR("eth_post() error, %s", curl_easy_strerror(res));
+  return block.data;
+}
+
