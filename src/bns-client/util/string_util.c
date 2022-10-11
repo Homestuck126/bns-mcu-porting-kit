@@ -51,8 +51,5 @@ char* bns_to_lower_case_index_value(char* a , char buffer []) {
   for (size_t i = 0; i < size-2; i++) {
     buffer[i] =  (tolower(a[i]));
   }
-  buffer[size-2] = a[size-2];
-  buffer[size-1] = a[size-1];
-  buffer[size] = a[size];
   return buffer;
 }
